@@ -1,0 +1,689 @@
+{% extends 'base.html' %}
+{% block title %}{{ quotation.quotation_number }}{% endblock %}
+{% block page_title %}{{ quotation.quotation_number }}{% endblock %}
+{% block breadcrumb %}ZIVARK / RFQ / {{ rfq.rfq_number }} / Generate{% endblock %}
+{% block nav_rfq %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.summary-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.summary-card { background: #fff; border: 1px solid #E2E8F0; border-top: 3px solid #3B82F6; border-radius: 8px; padding: 1rem 1.25rem; }
+.summary-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B; }
+.summary-value { font-size: 1.4rem; font-weight: 800; color: #0F172A; margin-top: 0.25rem; font-family: monospace; }
+.od-bar { display: flex; gap: 1.5rem; flex-wrap: wrap; padding: 0.75rem 1.25rem; background: #EFF6FF; border-bottom: 1px solid #DBEAFE; font-size: 0.78rem; }
+.od-chip { color: #1E40AF; font-weight: 600; }
+.od-chip span { color: #64748B; font-weight: 400; margin-right: 0.3rem; }
+.bom-table td, .bom-table th { padding: 0.5rem 0.75rem; font-size: 0.78rem; }
+.totals-section { background: #F8FAFC; border-top: 2px solid #E2E8F0; padding: 1rem 1.25rem; }
+.totals-grid { max-width: 360px; margin-left: auto; }
+.totals-row { display: flex; justify-content: space-between; padding: 0.35rem 0; font-size: 0.82rem; color: #64748B; border-bottom: 1px solid #F1F5F9; }
+.totals-row.grand { background: #0F172A; color: #fff; padding: 0.6rem 0.75rem; border-radius: 4px; margin-top: 0.5rem; font-weight: 700; font-size: 0.95rem; border: none; }
+.totals-row.grand span:last-child { color: #3B82F6; }
+
+/* EDITOR */
+.editor-panel { background: #fff; border: 2px solid #3B82F6; border-radius: 8px; overflow: hidden; margin-top: 1.5rem; }
+.editor-header { background: #0F172A; color: #fff; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center; }
+.formula-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #F0F4F8; border-bottom: 2px solid #E2E8F0; }
+.fx-badge { font-size: 0.78rem; font-weight: 700; color: #3B82F6; background: #0F172A; padding: 0.2rem 0.6rem; border-radius: 3px; font-family: monospace; flex-shrink: 0; }
+#formula-bar { flex: 1; border: 1.5px solid #E2E8F0; border-radius: 4px; padding: 0.4rem 0.75rem; font-family: monospace; font-size: 0.85rem; background: #fff; color: #0F172A; }
+#formula-bar:focus { border-color: #3B82F6; outline: none; }
+.live-totals { padding: 0.75rem 1.5rem; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; }
+.lt-item { text-align: center; }
+.lt-label { color: #64748B; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.lt-value { font-weight: 700; font-size: 0.95rem; color: #0F172A; font-family: monospace; }
+.lt-grand { background: #3B82F6; padding: 0.5rem 1rem; border-radius: 6px; }
+.lt-grand .lt-label { color: rgba(255,255,255,0.7); }
+.lt-grand .lt-value { color: #fff; font-size: 1.1rem; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.4.0/dist/handsontable.full.min.css">
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="/rfq/{{ rfq.pk }}/" class="btn btn-outline btn-sm">Back to RFQ</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- SUMMARY -->
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="summary-label">Quotation No</div>
+    <div class="summary-value" style="font-size:0.9rem">{{ quotation.quotation_number }}</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-label">Total Boxes</div>
+    <div class="summary-value">{{ results|length }}</div>
+  </div>
+  <div class="summary-card" style="border-top-color:#059669">
+    <div class="summary-label">Before GST</div>
+    <div class="summary-value" id="card-before-gst">
+      ₹{% for r in results %}{{ r.totals.before_gst|floatformat:0 }}{% endfor %}
+    </div>
+  </div>
+  <div class="summary-card" style="border-top-color:#F59E0B">
+    <div class="summary-label">Grand Total</div>
+    <div class="summary-value" style="color:#F59E0B" id="card-grand-total">
+      ₹{{ grand_total|floatformat:0 }}
+    </div>
+  </div>
+</div>
+
+<!-- ACTION BUTTONS -->
+<div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;flex-wrap:wrap">
+  <button onclick="toggleEditor()" id="edit-btn" class="btn btn-primary">Edit Costing Sheet</button>
+  <a href="/rfq/{{ rfq.pk }}/" class="btn btn-outline">Back to RFQ</a>
+</div>
+
+<!-- BOM SECTIONS -->
+{% for r in results %}
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="card-header">
+    <span class="card-title">{{ r.box.product_name }} — BOM & Costing</span>
+    <span style="font-size:0.72rem;color:#94A3B8">
+      Qty: {{ r.box.quantity }} | Weight: {{ r.box.weight_kg }}kg | {{ r.box.get_access_type_display }}
+    </span>
+  </div>
+
+  <!-- OD BAR -->
+  <div class="od-bar">
+    <div class="od-chip"><span>Box ID:</span>{{ r.box.box_id_length|floatformat:0 }} × {{ r.box.box_id_width|floatformat:0 }} × {{ r.box.box_id_height|floatformat:0 }} mm</div>
+    <div class="od-chip"><span>Box OD:</span>{{ r.design.box_od_l|floatformat:0 }} × {{ r.design.box_od_w|floatformat:0 }} × {{ r.design.box_od_h|floatformat:0 }} mm</div>
+    <div class="od-chip"><span>CBM:</span>{{ r.box.volume_cbm }}</div>
+    <div class="od-chip"><span>Area:</span>{{ r.box.total_area_sqm }} SQM</div>
+    {% if r.design.rule %}
+    <div class="od-chip"><span>Rule:</span>{{ r.design.rule.name }}</div>
+    {% endif %}
+  </div>
+
+  <!-- BOM TABLE -->
+  <div class="table-wrap">
+    <table class="bom-table" id="main-bom-table-{{ r.box.pk }}">
+      <thead>
+        <tr>
+          <th>SR</th>
+          <th>Description</th>
+          <th>Material</th>
+          <th class="num">L (MM)</th>
+          <th class="num">W (MM)</th>
+          <th class="num">H/T (MM)</th>
+          <th class="num">QTY NOS</th>
+          <th class="num">Total QTY</th>
+          <th>UOM</th>
+          <th class="num">Rate/UOM</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in r.bom %}
+        <tr>
+          <td>{{ item.sr_no }}</td>
+          <td>{{ item.description }}</td>
+          <td style="color:#64748B;font-size:0.72rem">{{ item.material }}</td>
+          <td class="num">{% if item.length_mm %}{{ item.length_mm|floatformat:0 }}{% else %}—{% endif %}</td>
+          <td class="num">{% if item.width_mm %}{{ item.width_mm|floatformat:0 }}{% else %}—{% endif %}</td>
+          <td class="num">{% if item.thickness_mm %}{{ item.thickness_mm|floatformat:0 }}{% else %}—{% endif %}</td>
+          <td class="num">{{ item.qty_nos|floatformat:0 }}</td>
+          <td class="num">{{ item.total_qty }}</td>
+          <td>{{ item.uom|upper }}</td>
+          <td class="num">₹{{ item.rate_per_uom|floatformat:0 }}</td>
+          <td class="num" style="font-weight:700;color:#059669">₹{{ item.total_cost|floatformat:0 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="10" style="text-align:right;color:#64748B;font-size:0.78rem">Total Cost</td>
+          <td class="num" style="font-weight:700">₹{{ r.totals.total_cost|floatformat:0 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="totals-section">
+    <div class="totals-grid">
+      <div class="totals-row">
+        <span>Total Cost</span>
+        <span>₹{{ r.totals.total_cost|floatformat:0 }}</span>
+      </div>
+      <div class="totals-row">
+        <span>Overhead {{ r.totals.overhead_pct }}%</span>
+        <span>₹{{ r.totals.overhead_amount|floatformat:0 }}</span>
+      </div>
+      <div class="totals-row">
+        <span>After Overhead</span>
+        <span>₹{{ r.totals.after_overhead|floatformat:0 }}</span>
+      </div>
+      <div class="totals-row">
+        <span>Margin {{ r.totals.margin_pct }}%</span>
+        <span>₹{{ r.totals.margin_amount|floatformat:0 }}</span>
+      </div>
+      <div class="totals-row">
+        <span>Before GST</span>
+        <span>₹{{ r.totals.before_gst|floatformat:0 }}</span>
+      </div>
+      <div class="totals-row">
+        <span>GST {{ r.totals.gst_pct }}%</span>
+        <span>₹{{ r.totals.gst_amount|floatformat:0 }}</span>
+      </div>
+      <div class="totals-row grand">
+        <span>Grand Total</span>
+        <span id="bom-grand-total">₹{{ r.totals.grand_total|floatformat:0 }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- EDIT COSTING SHEET PANEL -->
+<div id="editor-panel" style="display:none">
+  <div class="editor-panel">
+    <div class="editor-header">
+      <span style="font-weight:700;font-size:0.9rem">Edit Costing Sheet — Formula View</span>
+      <div style="display:flex;gap:0.5rem">
+        <button onclick="applyChanges()" style="background:#3B82F6;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">Apply</button>
+        <button onclick="resetChanges()" style="background:#475569;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">Reset</button>
+        <button onclick="toggleEditor()" style="background:#DC2626;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">Close</button>
+      </div>
+    </div>
+    <div class="formula-bar">
+      <span class="fx-badge">fx</span>
+      <input type="text" id="formula-bar"
+        placeholder="Click a cell to see formula — edit and press Enter to apply">
+    </div>
+    <div id="hot-container" style="width:100%;height:520px"></div>
+    <div class="live-totals">
+      <div class="lt-item">
+        <div class="lt-label">Total Cost</div>
+        <div class="lt-value" id="lt-total">₹0</div>
+      </div>
+      <div class="lt-item">
+        <div class="lt-label">Overhead</div>
+        <div class="lt-value" id="lt-overhead">₹0</div>
+      </div>
+      <div class="lt-item">
+        <div class="lt-label">After OH</div>
+        <div class="lt-value" id="lt-after">₹0</div>
+      </div>
+      <div class="lt-item">
+        <div class="lt-label">Margin</div>
+        <div class="lt-value" id="lt-margin">₹0</div>
+      </div>
+      <div class="lt-item">
+        <div class="lt-label">Before GST</div>
+        <div class="lt-value" id="lt-before-gst">₹0</div>
+      </div>
+      <div class="lt-grand lt-item">
+        <div class="lt-label">Grand Total</div>
+        <div class="lt-value" id="lt-grand">₹0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/handsontable@12.4.0/dist/handsontable.full.min.js"></script>
+<script>
+// ── DIMENSIONS ────────────────────────────
+{% for r in results %}
+const OD_L = {{ r.design.box_od_l|default:0 }};
+const OD_W = {{ r.design.box_od_w|default:0 }};
+const OD_H = {{ r.design.box_od_h|default:0 }};
+const ID_H = {{ r.design.box_id_h|default:0 }};
+const CBM  = {{ r.design.volumes.cbm|default:0 }};
+const OVERHEAD_PCT = {{ r.totals.overhead_pct|default:7 }};
+const MARGIN_PCT   = {{ r.totals.margin_pct|default:25 }};
+const GST_PCT      = {{ r.totals.gst_pct|default:12 }};
+{% endfor %}
+
+// ── BOM DATA ──────────────────────────────
+const ORIGINAL_BOM = [
+{% for r in results %}{% for item in r.bom %}{
+  sr: {{ item.sr_no }},
+  desc: "{{ item.description|escapejs }}",
+  material: "{{ item.material|escapejs }}",
+  l: {{ item.length_mm|default:0 }},
+  w: {{ item.width_mm|default:0 }},
+  h: {{ item.thickness_mm|default:0 }},
+  qty_nos: {{ item.qty_nos }},
+  total_qty: {{ item.total_qty }},
+  uom: "{{ item.uom }}",
+  rate: {{ item.rate_per_uom }},
+  total: {{ item.total_cost }},
+},{% endfor %}{% endfor %}
+];
+
+let hot = null;
+let selectedRow = -1;
+let selectedCol = -1;
+let skipNext    = false;
+let formulaStore = {};
+
+// ── PITCH MAP ─────────────────────────────
+const PITCH_MAP = {
+  'Deck':             { v:'OD_L', d:()=>OD_L, m:1 },
+  'Length Runner':    { v:'OD_W', d:()=>OD_W, m:1 },
+  'Width Runner':     { v:'OD_L', d:()=>OD_L, m:1 },
+  'Length Beading-L': { v:'ID_H', d:()=>ID_H, m:2 },
+  'Length Beading-H': { v:'OD_L', d:()=>OD_L, m:2 },
+  'Width Beading-W':  { v:'ID_H', d:()=>ID_H, m:2 },
+  'Width Beading-H':  { v:'OD_W', d:()=>OD_W, m:2 },
+  'Top Beading-L':    { v:'OD_W', d:()=>OD_W, m:2 },
+  'Top Beading-W':    { v:'OD_L', d:()=>OD_L, m:2 },
+  'Top Chocking':     { v:'OD_L', d:()=>OD_L, m:1 },
+  'Bottom Chocking':  { v:'OD_W', d:()=>OD_W, m:1 },
+};
+
+function getFormula(desc, qty, row) {
+  const entry = Object.entries(PITCH_MAP).find(([k]) => desc.includes(k));
+  if (entry) {
+    const [k, info] = entry;
+    const dim   = info.d();
+    const pitch = Math.round((dim / Math.max(qty / info.m, 1)) / 50) * 50 || 50;
+    const mult  = info.m > 1 ? `*${info.m}` : '';
+    return `=ROUNDUP(${info.v}/${pitch},0)${mult}`;
+  }
+  if (desc.includes('Lashing')) return `=ROUNDUP(OD_L/600,0)`;
+  if (desc === 'Silica Gel')    return `=ROUNDUP(CBM*500/50,0)`;
+  if (desc.includes('N/B'))     return `=ROUNDUP((OD_L/250)*4+(OD_W/250)*4+(OD_H/250)*4,0)`;
+  return null;
+}
+
+function getCFTFormula(row) {
+  return `=((D${row}/1000)*(E${row}/1000)*(F${row}/1000))*G${row}*(3.28^3)*1.05`;
+}
+
+function getSQMFormula(row) {
+  return `=(D${row}/1000)*(E${row}/1000)*G${row}*1.05`;
+}
+
+function getTotalFormula(row, uom, desc) {
+  if (uom==='MTR' || desc==='Silica Gel' || desc==='Tarpaulin')
+    return `=G${row}*H${row}*J${row}`;
+  return `=H${row}*J${row}`;
+}
+
+// ── TOGGLE ────────────────────────────────
+function toggleEditor() {
+  const panel = document.getElementById('editor-panel');
+  const btn   = document.getElementById('edit-btn');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    if (btn) btn.textContent = 'Close Editor';
+    setTimeout(() => {
+      initEditor();
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  } else {
+    panel.style.display = 'none';
+    if (btn) btn.textContent = 'Edit Costing Sheet';
+  }
+}
+
+// ── INIT EDITOR ───────────────────────────
+function initEditor() {
+  const container = document.getElementById('hot-container');
+  if (!container) return;
+  if (hot) { hot.destroy(); hot = null; }
+
+  // Build data with formulas
+  const BOM_START_ROW = 13;
+  const data = ORIGINAL_BOM.map((item, idx) => {
+    const excelRow = BOM_START_ROW + idx;
+    const uom      = item.uom.toUpperCase();
+    const desc     = item.desc;
+
+    // L column
+    let l_val = item.l || '';
+    if (['Deck','Length Runner','Length Beading-L',
+         'Length Beading-H','Length Wall','Top Wall',
+         'Top Beading-L','Top Beading-W','Bottom Chocking'].some(k => desc.includes(k))) {
+      l_val = OD_L;
+    } else if (['Width Runner','Width Beading-W','Width Beading-H',
+                'Width Wall','Top Chocking'].some(k => desc.includes(k))) {
+      l_val = OD_W;
+    }
+
+    // QTY formula
+    const qtyFormula = getFormula(desc, item.qty_nos, excelRow);
+
+    // TOTAL QTY formula
+    let tqFormula;
+    if (uom === 'CFT' && item.l) {
+      tqFormula = getCFTFormula(excelRow);
+    } else if (uom === 'SQM' && item.l) {
+      tqFormula = getSQMFormula(excelRow);
+    } else {
+      tqFormula = item.total_qty;
+    }
+
+    // TOTAL formula
+    const totalFormula = getTotalFormula(excelRow, uom, desc);
+
+    // Store formulas
+    if (!formulaStore[idx]) formulaStore[idx] = {};
+    if (qtyFormula)    formulaStore[idx][6]  = qtyFormula;
+    if (typeof tqFormula === 'string' && tqFormula.startsWith('='))
+                       formulaStore[idx][7]  = tqFormula;
+    formulaStore[idx][10] = totalFormula;
+    if (l_val && String(l_val).startsWith('='))
+                       formulaStore[idx][3]  = l_val;
+
+    return [
+      item.sr,
+      item.desc,
+      item.material,
+      item.l || '',
+      item.w || '',
+      item.h || '',
+      item.qty_nos,
+      item.total_qty,
+      item.uom,
+      item.rate,
+      item.total,
+    ];
+  });
+
+  hot = new Handsontable(container, {
+    data: data,
+    colHeaders: ['SR','Description','Material','L (mm)',
+                 'W (mm)','H/T (mm)','QTY NOS',
+                 'TOTAL QTY','UOM','Rate/UOM','TOTAL'],
+    columns: [
+      { type:'numeric', readOnly:true, width:40 },
+      { type:'text', width:160 },
+      { type:'text', width:140 },
+      { type:'numeric', width:75 },
+      { type:'numeric', width:75 },
+      { type:'numeric', width:75 },
+      { type:'numeric', width:80 },
+      { type:'numeric', width:100 },
+      { type:'text', width:65 },
+      { type:'numeric', width:90 },
+      { type:'numeric', readOnly:true, width:110 },
+    ],
+    licenseKey: 'non-commercial-and-evaluation',
+    height: 500,
+    rowHeaders: false,
+    stretchH: 'last',
+
+    afterSelection: function(row, col) {
+      selectedRow = row;
+      selectedCol = col;
+      if (skipNext) { skipNext = false; return; }
+
+      const bar  = document.getElementById('formula-bar');
+      if (!bar) return;
+
+      // Show formula if stored
+      const stored = formulaStore[row] && formulaStore[row][col];
+      if (stored) {
+        const val = hot.getDataAtCell(row, col);
+        bar.value = `${stored}  =  ${val}`;
+        bar.style.color = '#3B82F6';
+        return;
+      }
+
+      // Otherwise show value
+      const d    = hot.getDataAtRow(row);
+      const desc = d[1] || '';
+      const uom  = d[8] || '';
+      const l=d[3]||0, w=d[4]||0, h=d[5]||0;
+      const qty=d[6]||0, tq=d[7]||0, rate=d[9]||0;
+
+      if (col === 6) {
+        const f = getFormula(desc, qty, row + 13);
+        bar.value      = f ? `${f}  =  ${qty}` : String(qty);
+        bar.style.color = '#7C3AED';
+      } else if (col === 7) {
+        if (uom==='CFT'&&l)
+          bar.value = `=((${l}/1000)*(${w}/1000)*(${h}/1000))*${qty}*(3.28^3)*1.05  =  ${tq}`;
+        else if (uom==='SQM'&&l)
+          bar.value = `=(${l}/1000)*(${w}/1000)*${qty}*1.05  =  ${tq}`;
+        else bar.value = String(tq);
+        bar.style.color = '#059669';
+      } else if (col === 10) {
+        bar.value = `=TOTAL_QTY × RATE  =  ${tq} × ${rate}  =  ₹${d[10]}`;
+        bar.style.color = '#059669';
+      } else {
+        bar.value      = d[col] != null ? String(d[col]) : '';
+        bar.style.color = '#0F172A';
+      }
+    },
+
+    afterChange: function(changes, source) {
+      if (!changes || source === 'loadData' || source === 'recalc') return;
+      changes.forEach(([row, col]) => {
+        const d    = hot.getDataAtRow(row);
+        const uom  = d[8] || '';
+        const desc = d[1] || '';
+        const l=parseFloat(d[3])||0, w=parseFloat(d[4])||0, h=parseFloat(d[5])||0;
+        const qty=parseFloat(d[6])||0, rate=parseFloat(d[9])||0;
+
+        if ([3,4,5,6].includes(col)) {
+          if (uom==='CFT' && l && w && h) {
+            const cft = (l/1000)*(w/1000)*(h/1000)*qty*Math.pow(3.28,3)*1.05;
+            hot.setDataAtCell(row, 7, Math.round(cft*10000)/10000, 'recalc');
+          } else if (uom==='SQM' && l && w) {
+            const sqm = (l/1000)*(w/1000)*qty*1.05;
+            hot.setDataAtCell(row, 7, Math.round(sqm*10000)/10000, 'recalc');
+          }
+        }
+
+        const tq    = parseFloat(hot.getDataAtCell(row,7)) || 0;
+        const total = (uom==='MTR'||desc==='Silica Gel'||desc==='Tarpaulin')
+                      ? qty*tq*rate : tq*rate;
+        hot.setDataAtCell(row, 10, Math.round(total*100)/100, 'recalc');
+      });
+      updateLiveTotals();
+    },
+
+    cells: function(row, col) {
+      if (col === 10) return {
+        readOnly: true,
+        renderer: function(inst, td, r, c, p, v) {
+          Handsontable.renderers.NumericRenderer.apply(this, arguments);
+          td.style.background  = '#F0FDF4';
+          td.style.fontWeight  = '700';
+          td.style.color       = '#059669';
+          td.style.textAlign   = 'right';
+          td.innerHTML = v
+            ? '₹'+Number(v).toLocaleString('en-IN',{maximumFractionDigits:2})
+            : '₹0';
+        }
+      };
+      if (col === 0) return { readOnly: true };
+      return {};
+    },
+  });
+
+  // Formula bar Enter key
+  const bar = document.getElementById('formula-bar');
+  if (bar) {
+    bar.onkeydown = function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); applyFormulaBar(); }
+      if (e.key === 'Escape') {
+        if (hot && selectedRow >= 0) {
+          const val = hot.getDataAtCell(selectedRow, selectedCol);
+          bar.value = val != null ? String(val) : '';
+        }
+      }
+    };
+  }
+
+  updateLiveTotals();
+}
+
+// ── FORMULA BAR APPLY ─────────────────────
+function applyFormulaBar() {
+  if (!hot || selectedRow < 0) return;
+  const row = selectedRow, col = selectedCol;
+  const bar = document.getElementById('formula-bar');
+  if (!bar) return;
+
+  let raw = bar.value.trim();
+  const eqIdx = raw.lastIndexOf('  =  ');
+  if (eqIdx > 0) raw = raw.substring(0, eqIdx).trim();
+  const userFormula = raw;
+
+  const d   = hot.getDataAtRow(row);
+  const uom = d[8] || '', desc = d[1] || '';
+  let result;
+
+  if (raw.startsWith('=')) {
+    let expr = raw.substring(1)
+      .replace(/OD_L/g, OD_L).replace(/OD_W/g, OD_W)
+      .replace(/OD_H/g, OD_H).replace(/ID_H/g, ID_H)
+      .replace(/CBM/g,  CBM)
+      .replace(/\^/g,   '**')
+      .replace(/ROUNDUP\(([^,]+),\s*(\d+)\)/g,
+        (m, n, d) => `Math.ceil((${n})*Math.pow(10,${d}))/Math.pow(10,${d})`);
+    try {
+      result = Math.round(eval(expr) * 10000) / 10000;
+    } catch(err) {
+      bar.style.borderColor = '#DC2626';
+      setTimeout(() => bar.style.borderColor = '', 1200);
+      return;
+    }
+  } else {
+    result = parseFloat(raw);
+    if (isNaN(result)) {
+      if (col===1||col===2) hot.setDataAtCell(row, col, raw);
+      return;
+    }
+  }
+
+  // Save formula
+  if (!formulaStore[row]) formulaStore[row] = {};
+  if (userFormula.startsWith('=')) formulaStore[row][col] = userFormula;
+
+  hot.setDataAtCell(row, col, result);
+
+  const l=parseFloat(hot.getDataAtCell(row,3))||0;
+  const w=parseFloat(hot.getDataAtCell(row,4))||0;
+  const h=parseFloat(hot.getDataAtCell(row,5))||0;
+  const qty=parseFloat(hot.getDataAtCell(row,6))||0;
+  const rate=parseFloat(hot.getDataAtCell(row,9))||0;
+  let tq = parseFloat(hot.getDataAtCell(row,7))||0;
+
+  if ([3,4,5,6].includes(col)) {
+    if (uom==='CFT'&&l&&w&&h) {
+      tq = Math.round((l/1000)*(w/1000)*(h/1000)*qty*Math.pow(3.28,3)*1.05*10000)/10000;
+      hot.setDataAtCell(row, 7, tq, 'recalc');
+    } else if (uom==='SQM'&&l&&w) {
+      tq = Math.round((l/1000)*(w/1000)*qty*1.05*10000)/10000;
+      hot.setDataAtCell(row, 7, tq, 'recalc');
+    }
+  }
+
+  if ([3,4,5,6,7,9].includes(col)) {
+    const fq   = parseFloat(hot.getDataAtCell(row,6))||0;
+    const ftq  = parseFloat(hot.getDataAtCell(row,7))||0;
+    const frate= parseFloat(hot.getDataAtCell(row,9))||0;
+    const tot  = (uom==='MTR'||desc==='Silica Gel'||desc==='Tarpaulin')
+                 ? fq*ftq*frate : ftq*frate;
+    hot.setDataAtCell(row, 10, Math.round(tot*100)/100, 'recalc');
+  }
+
+  const finalQty = parseFloat(hot.getDataAtCell(row,6))||0;
+  if (col===6) {
+    bar.value = `${userFormula}  =  ${finalQty}`;
+    bar.style.color = '#7C3AED';
+  } else {
+    bar.value = String(result);
+  }
+
+  updateLiveTotals();
+  skipNext = true;
+  hot.selectCell(row, col);
+}
+
+// ── LIVE TOTALS ───────────────────────────
+function updateLiveTotals() {
+  if (!hot) return;
+  let tc = 0;
+  hot.getData().forEach(r => tc += parseFloat(r[10]) || 0);
+
+  const oh  = tc * OVERHEAD_PCT / 100;
+  const aoh = tc + oh;
+  const mg  = aoh * MARGIN_PCT / 100;
+  const bg  = Math.ceil((aoh + mg) / 100) * 100;
+  const gst = bg * GST_PCT / 100;
+  const gt  = bg + gst;
+
+  const fmt = v => '₹' + Math.round(v).toLocaleString('en-IN');
+  const el  = id => document.getElementById(id);
+
+  if (el('lt-total'))    el('lt-total').textContent    = fmt(tc);
+  if (el('lt-overhead')) el('lt-overhead').textContent = fmt(oh);
+  if (el('lt-after'))    el('lt-after').textContent    = fmt(aoh);
+  if (el('lt-margin'))   el('lt-margin').textContent   = fmt(mg);
+  if (el('lt-before-gst')) el('lt-before-gst').textContent = fmt(bg);
+  if (el('lt-grand'))    el('lt-grand').textContent    = fmt(gt);
+}
+
+// ── APPLY CHANGES ─────────────────────────
+function applyChanges() {
+  if (!hot) return;
+  const allData = hot.getData();
+
+  let tc = 0;
+  allData.forEach(r => tc += parseFloat(r[10]) || 0);
+  const oh  = tc * OVERHEAD_PCT / 100;
+  const aoh = tc + oh;
+  const mg  = aoh * MARGIN_PCT / 100;
+  const bg  = Math.ceil((aoh + mg) / 100) * 100;
+  const gst = bg * GST_PCT / 100;
+  const gt  = bg + gst;
+  const fmt = v => '₹' + Math.round(v).toLocaleString('en-IN');
+
+  // Update summary cards
+  const el = id => document.getElementById(id);
+  if (el('card-before-gst'))  el('card-before-gst').textContent  = fmt(bg);
+  if (el('card-grand-total')) el('card-grand-total').textContent  = fmt(gt);
+  if (el('bom-grand-total'))  el('bom-grand-total').textContent   = fmt(gt);
+
+  window.editedBomData = allData;
+  window.editedTotals  = {
+    total_cost:      Math.round(tc),
+    overhead_pct:    OVERHEAD_PCT,
+    overhead_amount: Math.round(oh),
+    after_overhead:  Math.round(aoh),
+    margin_pct:      MARGIN_PCT,
+    margin_amount:   Math.round(mg),
+    before_gst:      bg,
+    gst_pct:         GST_PCT,
+    gst_amount:      Math.round(gst),
+    grand_total:     Math.round(gt),
+  };
+
+  updateLiveTotals();
+  alert('Changes applied!');
+}
+
+// ── RESET ─────────────────────────────────
+function resetChanges() {
+  if (!hot) return;
+  if (!confirm('Reset to original values?')) return;
+  hot.loadData(ORIGINAL_BOM.map(i => [
+    i.sr, i.desc, i.material,
+    i.l||'', i.w||'', i.h||'',
+    i.qty_nos, i.total_qty, i.uom, i.rate, i.total
+  ]));
+  formulaStore = {};
+  window.editedBomData = null;
+  window.editedTotals  = null;
+  updateLiveTotals();
+}
+
+// Warn before leaving if unsaved
+window.addEventListener('beforeunload', function(e) {
+  if (window.editedBomData) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+</script>
+{% endblock %}

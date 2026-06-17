@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% block title %}Add Weight Rule{% endblock %}
+{% block page_title %}Add Weight Rule{% endblock %}
+{% block breadcrumb %}ZIVARK / Materials / Weight Rules / Add{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Add Weight Rule</h1>
+    <p>Define which materials to use for a machine weight range</p>
+  </div>
+  <a href="/materials/" class="btn btn-outline">Back</a>
+</div>
+
+<form method="POST">
+{% csrf_token %}
+
+<!-- BASIC INFO -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header"><span class="card-title">Weight Range</span></div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Rule Name *</label>
+        <input type="text" name="name" placeholder="e.g. Heavy 1500-4500kg" required>
+      </div>
+      <div class="form-group">
+        <label>Weight From (kg)</label>
+        <input type="number" name="weight_from" placeholder="1500" required>
+      </div>
+      <div class="form-group">
+        <label>Weight To (kg)</label>
+        <input type="number" name="weight_to" placeholder="4500" required>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MATERIAL SELECTION -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header"><span class="card-title">Material Selection — Select from your factory materials</span></div>
+  <div class="card-body">
+    <div class="form-grid" style="margin-bottom:1rem">
+
+      <div class="form-group">
+        <label>Deck Material</label>
+        <select name="deck_material">
+          <option value="">— Select —</option>
+          {% for mat in solid_woods %}
+          <option value="{{ mat.pk }}">{{ mat.name }}</option>
+          {% endfor %}
+          {% for mat in plywoods %}
+          <option value="{{ mat.pk }}">{{ mat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Deck Width (mm)</label>
+        <input type="number" name="deck_w" value="150">
+      </div>
+
+      <div class="form-group">
+        <label>Deck Height (mm)</label>
+        <input type="number" name="deck_h" value="50">
+      </div>
+
+      <div class="form-group">
+        <label>Width Runner Material</label>
+        <select name="runner_material">
+          <option value="">— Select —</option>
+          {% for mat in solid_woods %}
+          <option value="{{ mat.pk }}">{{ mat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Runner Width (mm)</label>
+        <input type="number" name="runner_w" value="75">
+      </div>
+
+      <div class="form-group">
+        <label>Runner Height (mm)</label>
+        <input type="number" name="runner_h" value="100">
+      </div>
+
+      <div class="form-group">
+        <label>Length Runner Material</label>
+        <select name="l_runner_material">
+          <option value="">— None —</option>
+          {% for mat in solid_woods %}
+          <option value="{{ mat.pk }}">{{ mat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>L-Runner Width (mm)</label>
+        <input type="number" name="l_runner_w" value="100">
+      </div>
+
+      <div class="form-group">
+        <label>L-Runner Height (mm)</label>
+        <input type="number" name="l_runner_h" value="100">
+      </div>
+
+      <div class="form-group">
+        <label>Beading Material</label>
+        <select name="beading_material">
+          <option value="">— Select —</option>
+          {% for mat in solid_woods %}
+          <option value="{{ mat.pk }}">{{ mat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Beading Width (mm)</label>
+        <input type="number" name="beading_w" value="75">
+      </div>
+
+      <div class="form-group">
+        <label>Beading Height (mm)</label>
+        <input type="number" name="beading_h" value="50">
+      </div>
+
+      <div class="form-group">
+        <label>Wall Material (Plywood)</label>
+        <select name="wall_material">
+          <option value="">— Select —</option>
+          {% for mat in plywoods %}
+          <option value="{{ mat.pk }}">{{ mat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Wall Thickness (mm)</label>
+        <input type="number" name="wall_t" value="8">
+      </div>
+
+      <div class="form-group">
+        <label>Top Wall Material</label>
+        <select name="top_material">
+          <option value="">— Same as wall —</option>
+          {% for mat in plywoods %}
+          <option value="{{ mat.pk }}">{{ mat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Chocking Material</label>
+        <select name="chock_material">
+          <option value="">— Select —</option>
+          {% for mat in solid_woods %}
+          <option value="{{ mat.pk }}">{{ mat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+    </div>
+
+    <div class="form-group" style="margin-bottom:0">
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+        <input type="checkbox" name="use_l_runner" style="width:auto">
+        Use Length Runner (for heavy machines with 4-way access)
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- PITCH CONFIGURATION -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header"><span class="card-title">Pitch Configuration — Spacing between planks</span></div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Deck Pitch (mm)</label>
+        <input type="number" name="deck_pitch" value="140">
+        <div class="form-note">Spacing between deck planks</div>
+      </div>
+      <div class="form-group">
+        <label>L-Runner Pitch (mm)</label>
+        <input type="number" name="l_runner_pitch" value="500">
+      </div>
+      <div class="form-group">
+        <label>W-Runner Pitch (mm)</label>
+        <input type="number" name="w_runner_pitch" value="600">
+      </div>
+      <div class="form-group">
+        <label>Length Beading-L Pitch (mm)</label>
+        <input type="number" name="lb_l_pitch" value="700">
+      </div>
+      <div class="form-group">
+        <label>Length Beading-H Pitch (mm)</label>
+        <input type="number" name="lb_h_pitch" value="900">
+      </div>
+      <div class="form-group">
+        <label>Width Beading-W Pitch (mm)</label>
+        <input type="number" name="wb_w_pitch" value="700">
+      </div>
+      <div class="form-group">
+        <label>Width Beading-H Pitch (mm)</label>
+        <input type="number" name="wb_h_pitch" value="500">
+      </div>
+      <div class="form-group">
+        <label>Top Beading-L Pitch (mm)</label>
+        <input type="number" name="top_bl_pitch" value="600">
+      </div>
+      <div class="form-group">
+        <label>Top Beading-W Pitch (mm)</label>
+        <input type="number" name="top_bw_pitch" value="700">
+      </div>
+      <div class="form-group">
+        <label>Top Chocking Pitch (mm)</label>
+        <input type="number" name="top_chock_pitch" value="500">
+      </div>
+      <div class="form-group">
+        <label>Bottom Chocking Pitch (mm)</label>
+        <input type="number" name="bot_chock_pitch" value="500">
+      </div>
+      <div class="form-group">
+        <label>Lashing Belt Pitch (mm)</label>
+        <input type="number" name="lashing_pitch" value="600">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULA CONFIG -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header"><span class="card-title">Pricing Formula — For this weight range</span></div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Overhead %</label>
+        <input type="number" name="overhead_pct" value="7" step="0.1">
+        <div class="form-note">Factory overhead percentage</div>
+      </div>
+      <div class="form-group">
+        <label>Margin %</label>
+        <input type="number" name="margin_pct" value="25" step="0.1">
+        <div class="form-note">Profit margin percentage</div>
+      </div>
+      <div class="form-group">
+        <label>GST %</label>
+        <input type="number" name="gst_pct" value="12" step="0.1">
+        <div class="form-note">GST on final price</div>
+      </div>
+      <div class="form-group">
+        <label>Wastage %</label>
+        <input type="number" name="wastage_pct" value="5" step="0.1">
+        <div class="form-note">Wood cutting wastage</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;gap:0.75rem">
+  <button type="submit" class="btn btn-primary">Save Weight Rule</button>
+  <a href="/materials/" class="btn btn-outline">Cancel</a>
+</div>
+
+</form>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}New Client{% endblock %}
+{% block page_title %}Add New Client{% endblock %}
+{% block breadcrumb %}ZIVARK / Clients / New{% endblock %}
+{% block nav_clients %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Add New Client</h1>
+    <p>Create a new client record</p>
+  </div>
+  <a href="/clients/" class="btn btn-outline">Back</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Client Information</span>
+  </div>
+  <div class="card-body">
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Company Name *</label>
+          <input type="text" name="company_name" placeholder="ABC Industries Ltd" required>
+        </div>
+        <div class="form-group">
+          <label>Contact Person *</label>
+          <input type="text" name="contact_person" placeholder="Mr. Ramesh Kumar" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="contact@company.com">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" name="phone" placeholder="+91 98765 43210">
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" name="city" placeholder="Bangalore">
+        </div>
+        <div class="form-group">
+          <label>Industry</label>
+          <select name="industry">
+            <option value="">Select Industry</option>
+            <option>Machine Manufacturing</option>
+            <option>Automotive</option>
+            <option>Chemical</option>
+            <option>Pharmaceutical</option>
+            <option>Defence</option>
+            <option>Aerospace</option>
+            <option>Electronics</option>
+            <option>Textile Machinery</option>
+            <option>Heavy Engineering</option>
+            <option>Export Trading</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label>Address</label>
+        <textarea name="address" placeholder="Full address..."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Any additional notes about this client..."></textarea>
+      </div>
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn btn-primary">Save Client</button>
+        <a href="/clients/" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

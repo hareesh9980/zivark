@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}ZIVARK{% endblock %} — Industrial ERP</title>
+<style>
+/* ── RESET ─────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F0F2F5; color: #1A1D23; min-height: 100vh; }
+
+/* ── LAYOUT ─────────────────────────────── */
+.app-layout { display: flex; min-height: 100vh; }
+
+/* ── SIDEBAR ─────────────────────────────── */
+.sidebar {
+  width: 240px; min-height: 100vh;
+  background: #0F172A;
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+.sidebar-brand {
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.brand-logo {
+  font-size: 1.5rem; font-weight: 800;
+  letter-spacing: 0.05em; color: #fff;
+  text-decoration: none;
+}
+.brand-logo span { color: #3B82F6; }
+.brand-tagline { font-size: 0.65rem; color: #64748B; margin-top: 0.2rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.sidebar-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+.nav-section { margin-bottom: 1.5rem; }
+.nav-section-title { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #475569; padding: 0 1.25rem; margin-bottom: 0.4rem; }
+
+.nav-item { display: block; padding: 0.6rem 1.25rem; color: #94A3B8; text-decoration: none; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.65rem; border-left: 3px solid transparent; transition: all 0.15s; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); border-left-color: #3B82F6; }
+.nav-item.active { color: #fff; background: rgba(59,130,246,0.12); border-left-color: #3B82F6; }
+.nav-icon { width: 16px; text-align: center; font-size: 0.85rem; }
+
+.sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); }
+.user-info { display: flex; align-items: center; gap: 0.75rem; }
+.user-avatar { width: 32px; height: 32px; background: #3B82F6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+.user-name { font-size: 0.78rem; font-weight: 600; color: #E2E8F0; }
+.user-role { font-size: 0.65rem; color: #64748B; text-transform: capitalize; }
+.logout-btn { margin-top: 0.75rem; display: block; padding: 0.4rem 0.75rem; background: rgba(239,68,68,0.1); color: #F87171; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-decoration: none; text-align: center; transition: all 0.15s; }
+.logout-btn:hover { background: rgba(239,68,68,0.2); }
+
+/* ── MAIN CONTENT ─────────────────────────────── */
+.main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── TOP BAR ─────────────────────────────── */
+.topbar { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.page-title { font-size: 0.95rem; font-weight: 700; color: #0F172A; }
+.breadcrumb { font-size: 0.72rem; color: #94A3B8; }
+.topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+
+/* ── PAGE BODY ─────────────────────────────── */
+.page-body { padding: 1.5rem; flex: 1; }
+
+/* ── MESSAGES ─────────────────────────────── */
+.messages { margin-bottom: 1rem; }
+.message { padding: 0.65rem 1rem; border-radius: 6px; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.4rem; }
+.message.success { background: #D1FAE5; color: #065F46; border-left: 3px solid #059669; }
+.message.error { background: #FEE2E2; color: #991B1B; border-left: 3px solid #DC2626; }
+.message.warning { background: #FEF3C7; color: #92400E; border-left: 3px solid #D97706; }
+.message.info { background: #DBEAFE; color: #1E40AF; border-left: 3px solid #3B82F6; }
+
+/* ── CARDS ─────────────────────────────── */
+.card { background: #fff; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; }
+.card-header { padding: 1rem 1.25rem; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 0.875rem; font-weight: 700; color: #0F172A; }
+.card-body { padding: 1.25rem; }
+
+/* ── BUTTONS ─────────────────────────────── */
+.btn { padding: 0.5rem 1.1rem; border-radius: 5px; font-weight: 600; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; border: none; cursor: pointer; transition: all 0.15s; letter-spacing: 0.01em; }
+.btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-primary { background: #3B82F6; color: #fff; }
+.btn-success { background: #059669; color: #fff; }
+.btn-danger  { background: #DC2626; color: #fff; }
+.btn-warning { background: #D97706; color: #fff; }
+.btn-outline { background: transparent; border: 1.5px solid #E2E8F0; color: #475569; }
+.btn-outline:hover { border-color: #3B82F6; color: #3B82F6; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.72rem; }
+
+/* ── BADGES ─────────────────────────────── */
+.badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.badge-blue   { background: #DBEAFE; color: #1E40AF; }
+.badge-green  { background: #D1FAE5; color: #065F46; }
+.badge-red    { background: #FEE2E2; color: #991B1B; }
+.badge-yellow { background: #FEF3C7; color: #92400E; }
+.badge-gray   { background: #F1F5F9; color: #475569; }
+.badge-purple { background: #EDE9FE; color: #5B21B6; }
+
+/* ── TABLES ─────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+thead { background: #F8FAFC; }
+th { padding: 0.65rem 1rem; text-align: left; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748B; border-bottom: 1px solid #E2E8F0; white-space: nowrap; }
+td { padding: 0.75rem 1rem; color: #374151; border-bottom: 1px solid #F8FAFC; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #FAFBFC; }
+.num { text-align: right; font-family: 'Courier New', monospace; }
+
+/* ── FORMS ─────────────────────────────── */
+.form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+.form-group label { font-size: 0.72rem; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-group input, .form-group select, .form-group textarea {
+  border: 1.5px solid #E2E8F0; border-radius: 5px;
+  padding: 0.55rem 0.75rem; font-size: 0.82rem;
+  color: #1A1D23; background: #fff;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-note { font-size: 0.68rem; color: #94A3B8; }
+
+/* ── STATS ─────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.1rem 1.25rem; border-top: 3px solid #3B82F6; }
+.stat-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B; }
+.stat-value { font-size: 1.6rem; font-weight: 800; color: #0F172A; margin-top: 0.3rem; font-family: 'Courier New', monospace; }
+.stat-sub { font-size: 0.65rem; color: #94A3B8; margin-top: 0.2rem; }
+
+/* ── EMPTY STATE ─────────────────────────────── */
+.empty-state { text-align: center; padding: 3rem 2rem; color: #94A3B8; }
+.empty-state-icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+.empty-state-title { font-size: 0.95rem; font-weight: 600; color: #475569; margin-bottom: 0.4rem; }
+.empty-state-text { font-size: 0.78rem; }
+
+/* ── PAGE HEADER ─────────────────────────────── */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.page-header h1 { font-size: 1.25rem; font-weight: 800; color: #0F172A; }
+.page-header p { font-size: 0.78rem; color: #64748B; margin-top: 0.2rem; }
+
+/* ── QUICK ACTIONS ─────────────────────────────── */
+.quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.action-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.25rem; text-decoration: none; color: #0F172A; display: flex; align-items: center; gap: 1rem; transition: all 0.15s; border-left: 4px solid transparent; }
+.action-card:hover { border-left-color: #3B82F6; box-shadow: 0 4px 12px rgba(0,0,0,0.06); transform: translateY(-1px); }
+.action-card-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+.action-card-title { font-size: 0.82rem; font-weight: 700; }
+.action-card-desc { font-size: 0.7rem; color: #64748B; margin-top: 0.15rem; }
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <a href="/dashboard/" class="brand-logo">ZI<span>VARK</span></a>
+      <div class="brand-tagline">Industrial Packaging ERP</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <a href="/dashboard/" class="nav-item {% block nav_dashboard %}{% endblock %}">
+          <span class="nav-icon">&#9632;</span> Dashboard
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Operations</div>
+        <a href="/rfq/" class="nav-item {% block nav_rfq %}{% endblock %}">
+          <span class="nav-icon">&#9632;</span> RFQ / Quotations
+        </a>
+        <a href="/clients/" class="nav-item {% block nav_clients %}{% endblock %}">
+          <span class="nav-icon">&#9632;</span> Clients
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Configuration</div>
+        <a href="/materials/" class="nav-item {% block nav_materials %}{% endblock %}">
+          <span class="nav-icon">&#9632;</span> Material Master
+        </a>
+      </div>
+
+      {% if request.user.is_admin %}
+      <div class="nav-section">
+        <div class="nav-section-title">Admin</div>
+        <a href="/admin/" class="nav-item">
+          <span class="nav-icon">&#9632;</span> Admin Panel
+        </a>
+        <a href="/accounts/register/" class="nav-item">
+          <span class="nav-icon">&#9632;</span> Add User
+        </a>
+      </div>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+        <div>
+          <div class="user-name">{{ request.user.full_name|default:request.user.username }}</div>
+          <div class="user-role">{{ request.user.role }}</div>
+        </div>
+      </div>
+      <a href="/accounts/logout/" class="logout-btn">Sign Out</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+          <div class="breadcrumb">{% block breadcrumb %}ZIVARK / Dashboard{% endblock %}</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        {% block topbar_actions %}{% endblock %}
+      </div>
+    </div>
+
+    <div class="page-body">
+      {% if messages %}
+      <div class="messages">
+        {% for msg in messages %}
+        <div class="message {{ msg.tags }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+</div>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

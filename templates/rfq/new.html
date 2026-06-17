@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block title %}New RFQ{% endblock %}
+{% block page_title %}New RFQ{% endblock %}
+{% block breadcrumb %}ZIVARK / RFQ / New{% endblock %}
+{% block nav_rfq %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.box-section { background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; }
+.box-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.box-section-title { font-size: 0.85rem; font-weight: 700; color: #0F172A; }
+.override-section { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 1rem; margin-top: 1rem; }
+.override-title { font-size: 0.72rem; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>New RFQ</h1>
+    <p>Create a new request for quotation</p>
+  </div>
+  <a href="/rfq/" class="btn btn-outline">Back</a>
+</div>
+
+<form method="POST" id="rfq-form">
+{% csrf_token %}
+<input type="hidden" name="box_count" id="box_count" value="1">
+
+<!-- CLIENT INFO -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header"><span class="card-title">Client Information</span></div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Select Client</label>
+        <select name="client">
+          <option value="">— Walk-in / No client —</option>
+          {% for client in clients %}
+          <option value="{{ client.pk }}">{{ client.company_name }} — {{ client.contact_person }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label>Notes</label>
+        <input type="text" name="notes" placeholder="Any special requirements or notes">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOX SECTIONS -->
+<div id="boxes-container">
+  <div class="box-section" id="box-1">
+    <div class="box-section-header">
+      <span class="box-section-title">Box 1</span>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label>Product Name *</label>
+        <input type="text" name="product_name_1" placeholder="e.g. CNC Machine, Compressor" required>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="quantity_1" value="1" min="1">
+      </div>
+      <div class="form-group">
+        <label>Weight (kg) *</label>
+        <input type="number" name="weight_1" placeholder="3000" step="0.1" required>
+      </div>
+    </div>
+
+    <div style="margin-bottom:0.5rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748B">
+      Inside Dimensions (ID) — Customer given
+    </div>
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label>Length (mm) *</label>
+        <input type="number" name="length_1" placeholder="3940" required>
+      </div>
+      <div class="form-group">
+        <label>Width (mm) *</label>
+        <input type="number" name="width_1" placeholder="1250" required>
+      </div>
+      <div class="form-group">
+        <label>Height (mm) *</label>
+        <input type="number" name="height_1" placeholder="2250" required>
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label>Access Type</label>
+        <select name="access_type_1">
+          <option value="2_access">2 Access (Runners)</option>
+          <option value="4_access">4 Access (Blocks)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Shipment</label>
+        <select name="shipment_type_1">
+          <option value="export">Export / International</option>
+          <option value="domestic">Domestic</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- MANUAL OVERRIDE -->
+    <div class="override-section">
+      <div class="override-title">Manual Override — Leave blank for auto selection by weight</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Beading Width (mm)</label>
+          <input type="number" name="beading_w_1" placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label>Beading Height (mm)</label>
+          <input type="number" name="beading_h_1" placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label>Wall Thickness (mm)</label>
+          <input type="number" name="wall_t_1" placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label>Deck Width (mm)</label>
+          <input type="number" name="deck_w_1" placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label>Deck Height (mm)</label>
+          <input type="number" name="deck_h_1" placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label>Runner Width (mm)</label>
+          <input type="number" name="runner_w_1" placeholder="Auto">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BOX BUTTON -->
+<button type="button" onclick="addBox()"
+  style="width:100%;padding:0.75rem;background:#F8FAFC;border:1.5px dashed #CBD5E0;border-radius:8px;font-size:0.82rem;font-weight:600;color:#64748B;cursor:pointer;margin-bottom:1rem;transition:all 0.15s"
+  onmouseover="this.style.borderColor='#3B82F6';this.style.color='#3B82F6'"
+  onmouseout="this.style.borderColor='#CBD5E0';this.style.color='#64748B'">
+  + Add Another Box
+</button>
+
+<div style="display:flex;gap:0.75rem">
+  <button type="submit" class="btn btn-primary">Save RFQ & Generate</button>
+  <a href="/rfq/" class="btn btn-outline">Cancel</a>
+</div>
+
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let boxCount = 1;
+
+function addBox() {
+  boxCount++;
+  document.getElementById('box_count').value = boxCount;
+
+  const container = document.getElementById('boxes-container');
+  const div = document.createElement('div');
+  div.className = 'box-section';
+  div.id = `box-${boxCount}`;
+  div.innerHTML = `
+    <div class="box-section-header">
+      <span class="box-section-title">Box ${boxCount}</span>
+      <button type="button" onclick="removeBox(${boxCount})"
+        style="background:#FEE2E2;color:#DC2626;border:none;padding:0.3rem 0.75rem;border-radius:4px;font-size:0.72rem;font-weight:600;cursor:pointer">
+        Remove
+      </button>
+    </div>
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label>Product Name *</label>
+        <input type="text" name="product_name_${boxCount}" placeholder="e.g. CNC Machine" required>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="quantity_${boxCount}" value="1" min="1">
+      </div>
+      <div class="form-group">
+        <label>Weight (kg) *</label>
+        <input type="number" name="weight_${boxCount}" placeholder="3000" step="0.1" required>
+      </div>
+    </div>
+    <div style="margin-bottom:0.5rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748B">Inside Dimensions (ID)</div>
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label>Length (mm) *</label>
+        <input type="number" name="length_${boxCount}" placeholder="3940" required>
+      </div>
+      <div class="form-group">
+        <label>Width (mm) *</label>
+        <input type="number" name="width_${boxCount}" placeholder="1250" required>
+      </div>
+      <div class="form-group">
+        <label>Height (mm) *</label>
+        <input type="number" name="height_${boxCount}" placeholder="2250" required>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label>Access Type</label>
+        <select name="access_type_${boxCount}">
+          <option value="2_access">2 Access (Runners)</option>
+          <option value="4_access">4 Access (Blocks)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Shipment</label>
+        <select name="shipment_type_${boxCount}">
+          <option value="export">Export / International</option>
+          <option value="domestic">Domestic</option>
+        </select>
+      </div>
+    </div>
+    <div class="override-section">
+      <div class="override-title">Manual Override — Leave blank for auto</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Beading Width (mm)</label>
+          <input type="number" name="beading_w_${boxCount}" placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label>Beading Height (mm)</label>
+          <input type="number" name="beading_h_${boxCount}" placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label>Wall Thickness (mm)</label>
+          <input type="number" name="wall_t_${boxCount}" placeholder="Auto">
+        </div>
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+function removeBox(num) {
+  const el = document.getElementById(`box-${num}`);
+  if (el) el.remove();
+  boxCount--;
+  document.getElementById('box_count').value = boxCount;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb %}ZIVARK / Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block topbar_actions %}
+<a href="/rfq/new/" class="btn btn-primary btn-sm">+ New RFQ</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- STATS -->
+<div class="stats-grid">
+  <div class="stat-card" style="border-top-color:#3B82F6">
+    <div class="stat-label">Total RFQs</div>
+    <div class="stat-value">0</div>
+    <div class="stat-sub">All time</div>
+  </div>
+  <div class="stat-card" style="border-top-color:#F59E0B">
+    <div class="stat-label">Pending</div>
+    <div class="stat-value">0</div>
+    <div class="stat-sub">Needs action</div>
+  </div>
+  <div class="stat-card" style="border-top-color:#8B5CF6">
+    <div class="stat-label">Sent</div>
+    <div class="stat-value">0</div>
+    <div class="stat-sub">To customer</div>
+  </div>
+  <div class="stat-card" style="border-top-color:#059669">
+    <div class="stat-label">Won</div>
+    <div class="stat-value">0</div>
+    <div class="stat-sub">Orders confirmed</div>
+  </div>
+  <div class="stat-card" style="border-top-color:#EC4899">
+    <div class="stat-label">Revenue</div>
+    <div class="stat-value" style="font-size:1.1rem">₹0</div>
+    <div class="stat-sub">This month</div>
+  </div>
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="quick-actions">
+  <a href="/rfq/new/" class="action-card" style="border-left-color:#3B82F6">
+    <div class="action-card-icon" style="background:#EFF6FF">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+    </div>
+    <div>
+      <div class="action-card-title">New RFQ</div>
+      <div class="action-card-desc">Create box quotation</div>
+    </div>
+  </a>
+  <a href="/clients/new/" class="action-card" style="border-left-color:#059669">
+    <div class="action-card-icon" style="background:#ECFDF5">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div>
+      <div class="action-card-title">Add Client</div>
+      <div class="action-card-desc">New client record</div>
+    </div>
+  </a>
+  <a href="/clients/" class="action-card" style="border-left-color:#8B5CF6">
+    <div class="action-card-icon" style="background:#F5F3FF">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div>
+      <div class="action-card-title">All Clients</div>
+      <div class="action-card-desc">View client list</div>
+    </div>
+  </a>
+  <a href="/materials/" class="action-card" style="border-left-color:#F59E0B">
+    <div class="action-card-icon" style="background:#FFFBEB">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </div>
+    <div>
+      <div class="action-card-title">Material Master</div>
+      <div class="action-card-desc">Manage materials</div>
+    </div>
+  </a>
+</div>
+
+<!-- RECENT RFQs -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Recent RFQs</span>
+    <a href="/rfq/" class="btn btn-outline btn-sm">View All</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>RFQ Number</th>
+          <th>Client</th>
+          <th>Engineer</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <div class="empty-state-icon">&#9632;</div>
+              <div class="empty-state-title">No RFQs yet</div>
+              <div class="empty-state-text">Create your first RFQ to get started</div>
+              <a href="/rfq/new/" class="btn btn-primary btn-sm" style="margin-top:1rem">Create RFQ</a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}{{ rfq.rfq_number }}{% endblock %}
+{% block page_title %}{{ rfq.rfq_number }}{% endblock %}
+{% block breadcrumb %}ZIVARK / RFQ / {{ rfq.rfq_number }}{% endblock %}
+{% block nav_rfq %}active{% endblock %}
+
+{% block topbar_actions %}
+<a href="/rfq/{{ rfq.pk }}/generate/" class="btn btn-primary btn-sm">Generate Quotation</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- STATUS BAR -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-body" style="padding:1rem">
+    <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#64748B;margin-bottom:0.75rem">
+      Update Status — Current:
+      <span class="badge
+        {% if rfq.status == 'won' %}badge-green
+        {% elif rfq.status == 'lost' %}badge-red
+        {% elif rfq.status == 'sent' %}badge-blue
+        {% else %}badge-yellow{% endif %}">
+        {{ rfq.get_status_display }}
+      </span>
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <form method="POST" action="/rfq/{{ rfq.pk }}/status/" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="sent">
+        <button type="submit" class="btn btn-outline btn-sm"
+          onclick="return confirm('Mark as Sent?')">Mark as Sent</button>
+      </form>
+      <form method="POST" action="/rfq/{{ rfq.pk }}/status/" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="won">
+        <button type="submit" class="btn btn-success btn-sm"
+          onclick="return confirm('Mark as WON?')">Mark as Won</button>
+      </form>
+      <form method="POST" action="/rfq/{{ rfq.pk }}/status/" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="lost">
+        <button type="submit" class="btn btn-danger btn-sm"
+          onclick="return confirm('Mark as Lost?')">Mark as Lost</button>
+      </form>
+      <form method="POST" action="/rfq/{{ rfq.pk }}/status/" style="display:inline">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="in_progress">
+        <button type="submit" class="btn btn-outline btn-sm">Reset</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT INFO -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header">
+    <span class="card-title">Client Details</span>
+  </div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div>
+        <div class="form-note">Company</div>
+        <div style="font-weight:600;margin-top:0.2rem">
+          {{ rfq.client.company_name|default:"Walk-in Customer" }}
+        </div>
+      </div>
+      <div>
+        <div class="form-note">Contact</div>
+        <div style="font-weight:600;margin-top:0.2rem">
+          {{ rfq.client.contact_person|default:"—" }}
+        </div>
+      </div>
+      <div>
+        <div class="form-note">Engineer</div>
+        <div style="font-weight:600;margin-top:0.2rem">
+          {{ rfq.engineer.full_name|default:rfq.engineer.username }}
+        </div>
+      </div>
+      <div>
+        <div class="form-note">Created</div>
+        <div style="margin-top:0.2rem">{{ rfq.created_at|date:"d M Y, H:i" }}</div>
+      </div>
+      {% if rfq.engineer_notes %}
+      <div style="grid-column:span 2">
+        <div class="form-note">Notes</div>
+        <div style="margin-top:0.2rem">{{ rfq.engineer_notes }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- BOX DETAILS -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Box Details ({{ boxes.count }} box{{ boxes.count|pluralize }})</span>
+    <a href="/rfq/{{ rfq.pk }}/generate/" class="btn btn-primary btn-sm">Generate Quotation</a>
+  </div>
+  <div class="card-body">
+    {% for box in boxes %}
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:1.25rem;margin-bottom:0.75rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <strong>{{ box.product_name }}</strong>
+        <span class="badge badge-gray">Qty: {{ box.quantity }}</span>
+      </div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:0.78rem">
+        <div>ID: <strong>{{ box.box_id_length|floatformat:0 }} × {{ box.box_id_width|floatformat:0 }} × {{ box.box_id_height|floatformat:0 }} mm</strong></div>
+        <div>Weight: <strong>{{ box.weight_kg }} kg</strong></div>
+        <div>Access: <strong>{{ box.get_access_type_display }}</strong></div>
+        <div>Shipment: <strong>{{ box.get_shipment_type_display }}</strong></div>
+        {% if box.box_od_length %}
+        <div>OD: <strong>{{ box.box_od_length|floatformat:0 }} × {{ box.box_od_width|floatformat:0 }} × {{ box.box_od_height|floatformat:0 }} mm</strong></div>
+        <div>CBM: <strong>{{ box.volume_cbm }}</strong></div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

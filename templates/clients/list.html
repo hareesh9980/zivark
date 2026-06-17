@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Clients{% endblock %}
+{% block page_title %}Clients{% endblock %}
+{% block breadcrumb %}ZIVARK / Clients{% endblock %}
+{% block nav_clients %}active{% endblock %}
+
+{% block topbar_actions %}
+<a href="/clients/new/" class="btn btn-primary btn-sm">+ Add Client</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">All Clients ({{ clients|length }})</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Contact Person</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>City</th>
+          <th>Industry</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for client in clients %}
+        <tr>
+          <td><strong>{{ client.company_name }}</strong></td>
+          <td>{{ client.contact_person }}</td>
+          <td>{{ client.email|default:"—" }}</td>
+          <td>{{ client.phone|default:"—" }}</td>
+          <td>{{ client.city|default:"—" }}</td>
+          <td>{{ client.industry|default:"—" }}</td>
+          <td><a href="/clients/{{ client.pk }}/" class="btn btn-outline btn-sm">View</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-title">No clients yet</div>
+              <a href="/clients/new/" class="btn btn-primary btn-sm" style="margin-top:1rem">Add Client</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

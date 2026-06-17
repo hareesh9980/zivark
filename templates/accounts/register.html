@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Add User{% endblock %}
+{% block page_title %}Add New User{% endblock %}
+{% block breadcrumb %}ZIVARK / Admin / Add User{% endblock %}
+{% block nav_dashboard %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Add New User</h1>
+    <p>Create user account with role-based access</p>
+  </div>
+  <a href="/dashboard/" class="btn btn-outline">Back</a>
+</div>
+
+<div class="card" style="max-width:600px">
+  <div class="card-header">
+    <span class="card-title">User Details</span>
+  </div>
+  <div class="card-body">
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-grid-2" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" name="full_name" placeholder="John Doe" required>
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" placeholder="johndoe" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="john@company.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="Min 8 characters" required>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select name="role">
+            <option value="engineer">Engineer</option>
+            <option value="sales">Sales</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Create User</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

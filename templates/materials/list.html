@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block title %}Material Master{% endblock %}
+{% block page_title %}Material Master{% endblock %}
+{% block breadcrumb %}ZIVARK / Materials{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block topbar_actions %}
+<a href="/materials/add/" class="btn btn-primary btn-sm">+ Add Material</a>
+<a href="/materials/rules/add/" class="btn btn-outline btn-sm">+ Weight Rule</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.mat-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.mat-tab { padding: 0.5rem 1.25rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: 1.5px solid #E2E8F0; background: #fff; color: #475569; text-decoration: none; transition: all 0.15s; }
+.mat-tab:hover, .mat-tab.active { background: #3B82F6; color: #fff; border-color: #3B82F6; }
+.mat-section { margin-bottom: 2rem; }
+.mat-section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #F1F5F9; }
+.mat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; }
+.mat-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: flex-start; }
+.mat-card.inactive { opacity: 0.5; }
+.mat-name { font-size: 0.85rem; font-weight: 700; color: #0F172A; }
+.mat-details { font-size: 0.72rem; color: #64748B; margin-top: 0.2rem; }
+.mat-rate { font-size: 0.95rem; font-weight: 800; color: #059669; font-family: monospace; }
+.mat-uom { font-size: 0.65rem; color: #94A3B8; }
+.mat-actions { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+.rule-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.25rem; margin-bottom: 0.75rem; }
+.rule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.rule-name { font-size: 0.9rem; font-weight: 700; color: #0F172A; }
+.rule-weight { background: #DBEAFE; color: #1E40AF; padding: 0.2rem 0.75rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+.rule-mats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+.rule-mat { background: #F8FAFC; border-radius: 4px; padding: 0.4rem 0.6rem; }
+.rule-mat-label { font-size: 0.6rem; text-transform: uppercase; color: #94A3B8; font-weight: 700; }
+.rule-mat-value { font-size: 0.72rem; font-weight: 600; color: #0F172A; margin-top: 0.1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- MATERIAL SECTIONS -->
+<div class="mat-section">
+  <div class="mat-section-title">Solid Wood ({{ solid_woods|length }} materials) — Calculated in CFT</div>
+  {% if solid_woods %}
+  <div class="mat-grid">
+    {% for mat in solid_woods %}
+    <div class="mat-card {% if not mat.is_active %}inactive{% endif %}">
+      <div>
+        <div class="mat-name">{{ mat.name }}</div>
+        <div class="mat-details">
+          {{ mat.wood_type }} — {{ mat.wood_grade }}
+          {% if mat.width_mm %}| {{ mat.width_mm|floatformat:0 }}×{{ mat.height_mm|floatformat:0 }}mm{% endif %}
+        </div>
+        <div class="mat-actions">
+          <a href="/materials/{{ mat.pk }}/edit/" class="btn btn-outline btn-sm">Edit</a>
+          <a href="/materials/{{ mat.pk }}/toggle/" class="btn btn-sm {% if mat.is_active %}btn-danger{% else %}btn-success{% endif %}">
+            {% if mat.is_active %}Disable{% else %}Enable{% endif %}
+          </a>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="mat-rate">₹{{ mat.rate|floatformat:0 }}</div>
+        <div class="mat-uom">per {{ mat.uom }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="background:#F8FAFC;border:1px dashed #E2E8F0;border-radius:8px;padding:2rem;text-align:center;color:#94A3B8">
+    No solid wood materials added yet.
+    <a href="/materials/add/" style="color:#3B82F6;font-weight:600;margin-left:0.5rem">Add now</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="mat-section">
+  <div class="mat-section-title">Plywood / Sheet ({{ plywoods|length }} materials) — Calculated in SQM</div>
+  {% if plywoods %}
+  <div class="mat-grid">
+    {% for mat in plywoods %}
+    <div class="mat-card {% if not mat.is_active %}inactive{% endif %}">
+      <div>
+        <div class="mat-name">{{ mat.name }}</div>
+        <div class="mat-details">
+          {{ mat.wood_grade }}
+          {% if mat.thickness_mm %}| {{ mat.thickness_mm|floatformat:0 }}mm thick{% endif %}
+        </div>
+        <div class="mat-actions">
+          <a href="/materials/{{ mat.pk }}/edit/" class="btn btn-outline btn-sm">Edit</a>
+          <a href="/materials/{{ mat.pk }}/toggle/" class="btn btn-sm {% if mat.is_active %}btn-danger{% else %}btn-success{% endif %}">
+            {% if mat.is_active %}Disable{% else %}Enable{% endif %}
+          </a>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="mat-rate">₹{{ mat.rate|floatformat:0 }}</div>
+        <div class="mat-uom">per {{ mat.uom }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="background:#F8FAFC;border:1px dashed #E2E8F0;border-radius:8px;padding:2rem;text-align:center;color:#94A3B8">
+    No plywood materials added yet.
+    <a href="/materials/add/" style="color:#3B82F6;font-weight:600;margin-left:0.5rem">Add now</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="mat-section">
+  <div class="mat-section-title">Hardware ({{ hardwares|length }} items) — Rate x Quantity</div>
+  {% if hardwares %}
+  <div class="mat-grid">
+    {% for mat in hardwares %}
+    <div class="mat-card {% if not mat.is_active %}inactive{% endif %}">
+      <div>
+        <div class="mat-name">{{ mat.name }}</div>
+        <div class="mat-details">{{ mat.description|default:"Hardware item" }}</div>
+        <div class="mat-actions">
+          <a href="/materials/{{ mat.pk }}/edit/" class="btn btn-outline btn-sm">Edit</a>
+          <a href="/materials/{{ mat.pk }}/toggle/" class="btn btn-sm {% if mat.is_active %}btn-danger{% else %}btn-success{% endif %}">
+            {% if mat.is_active %}Disable{% else %}Enable{% endif %}
+          </a>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="mat-rate">₹{{ mat.rate|floatformat:0 }}</div>
+        <div class="mat-uom">per {{ mat.uom }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="background:#F8FAFC;border:1px dashed #E2E8F0;border-radius:8px;padding:2rem;text-align:center;color:#94A3B8">
+    No hardware items added yet.
+    <a href="/materials/add/" style="color:#3B82F6;font-weight:600;margin-left:0.5rem">Add now</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="mat-section">
+  <div class="mat-section-title">Consumables ({{ consumables|length }} items)</div>
+  {% if consumables %}
+  <div class="mat-grid">
+    {% for mat in consumables %}
+    <div class="mat-card {% if not mat.is_active %}inactive{% endif %}">
+      <div>
+        <div class="mat-name">{{ mat.name }}</div>
+        <div class="mat-details">{{ mat.description|default:"Consumable item" }}</div>
+        <div class="mat-actions">
+          <a href="/materials/{{ mat.pk }}/edit/" class="btn btn-outline btn-sm">Edit</a>
+          <a href="/materials/{{ mat.pk }}/toggle/" class="btn btn-sm {% if mat.is_active %}btn-danger{% else %}btn-success{% endif %}">
+            {% if mat.is_active %}Disable{% else %}Enable{% endif %}
+          </a>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="mat-rate">₹{{ mat.rate|floatformat:0 }}</div>
+        <div class="mat-uom">per {{ mat.uom }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="background:#F8FAFC;border:1px dashed #E2E8F0;border-radius:8px;padding:2rem;text-align:center;color:#94A3B8">
+    No consumables added yet.
+    <a href="/materials/add/" style="color:#3B82F6;font-weight:600;margin-left:0.5rem">Add now</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- WEIGHT RULES -->
+<div class="mat-section">
+  <div class="mat-section-title" style="display:flex;justify-content:space-between;align-items:center">
+    <span>Weight Rules ({{ weight_rules|length }} rules) — System selects materials based on machine weight</span>
+    <a href="/materials/rules/add/" class="btn btn-primary btn-sm">+ Add Rule</a>
+  </div>
+  {% if weight_rules %}
+  {% for rule in weight_rules %}
+  <div class="rule-card">
+    <div class="rule-header">
+      <div>
+        <span class="rule-name">{{ rule.name }}</span>
+        <span class="rule-weight" style="margin-left:0.75rem">{{ rule.weight_from|floatformat:0 }} — {{ rule.weight_to|floatformat:0 }} kg</span>
+      </div>
+      <a href="/materials/rules/{{ rule.pk }}/edit/" class="btn btn-outline btn-sm">Edit</a>
+    </div>
+    <div class="rule-mats">
+      <div class="rule-mat">
+        <div class="rule-mat-label">Deck</div>
+        <div class="rule-mat-value">{{ rule.deck_material.name|default:"—" }}</div>
+      </div>
+      <div class="rule-mat">
+        <div class="rule-mat-label">Runner</div>
+        <div class="rule-mat-value">{{ rule.runner_material.name|default:"—" }}</div>
+      </div>
+      <div class="rule-mat">
+        <div class="rule-mat-label">Beading</div>
+        <div class="rule-mat-value">{{ rule.beading_material.name|default:"—" }}</div>
+      </div>
+      <div class="rule-mat">
+        <div class="rule-mat-label">Wall</div>
+        <div class="rule-mat-value">{{ rule.wall_material.name|default:"—" }}</div>
+      </div>
+    </div>
+    <div style="margin-top:0.75rem;display:flex;gap:1rem;flex-wrap:wrap">
+      <span style="font-size:0.72rem;color:#64748B">Overhead: <strong>{{ rule.overhead_pct }}%</strong></span>
+      <span style="font-size:0.72rem;color:#64748B">Margin: <strong>{{ rule.margin_pct }}%</strong></span>
+      <span style="font-size:0.72rem;color:#64748B">GST: <strong>{{ rule.gst_pct }}%</strong></span>
+      <span style="font-size:0.72rem;color:#64748B">Wastage: <strong>{{ rule.wastage_pct }}%</strong></span>
+      <span style="font-size:0.72rem;color:#64748B">Deck Pitch: <strong>{{ rule.deck_pitch }}mm</strong></span>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div style="background:#F8FAFC;border:1px dashed #E2E8F0;border-radius:8px;padding:2rem;text-align:center;color:#94A3B8">
+    No weight rules configured yet.
+    <br><small>Weight rules tell the system which materials to use for different machine weights</small>
+    <br><a href="/materials/rules/add/" style="color:#3B82F6;font-weight:600;margin-top:0.5rem;display:inline-block">Add First Rule</a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

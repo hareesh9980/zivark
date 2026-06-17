@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}RFQ List{% endblock %}
+{% block page_title %}RFQ / Quotations{% endblock %}
+{% block breadcrumb %}ZIVARK / RFQ{% endblock %}
+{% block nav_rfq %}active{% endblock %}
+
+{% block topbar_actions %}
+<a href="/rfq/new/" class="btn btn-primary btn-sm">+ New RFQ</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">All RFQs ({{ rfqs|length }})</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>RFQ Number</th>
+          <th>Client</th>
+          <th>Engineer</th>
+          <th>Boxes</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rfq in rfqs %}
+        <tr>
+          <td><strong>{{ rfq.rfq_number }}</strong></td>
+          <td>{{ rfq.client.company_name|default:"—" }}</td>
+          <td>{{ rfq.engineer.full_name|default:rfq.engineer.username|default:"—" }}</td>
+          <td>{{ rfq.boxes.count }}</td>
+          <td>
+            <span class="badge
+              {% if rfq.status == 'won' %}badge-green
+              {% elif rfq.status == 'lost' %}badge-red
+              {% elif rfq.status == 'sent' %}badge-blue
+              {% elif rfq.status == 'draft' %}badge-gray
+              {% else %}badge-yellow{% endif %}">
+              {{ rfq.get_status_display }}
+            </span>
+          </td>
+          <td>{{ rfq.created_at|date:"d M Y" }}</td>
+          <td style="display:flex;gap:0.4rem">
+            <a href="/rfq/{{ rfq.pk }}/" class="btn btn-outline btn-sm">View</a>
+            <a href="/rfq/{{ rfq.pk }}/generate/" class="btn btn-primary btn-sm">Generate</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-title">No RFQs yet</div>
+              <a href="/rfq/new/" class="btn btn-primary btn-sm" style="margin-top:1rem">Create First RFQ</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

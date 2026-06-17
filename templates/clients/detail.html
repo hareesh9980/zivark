@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}{{ client.company_name }}{% endblock %}
+{% block page_title %}{{ client.company_name }}{% endblock %}
+{% block breadcrumb %}ZIVARK / Clients / {{ client.company_name }}{% endblock %}
+{% block nav_clients %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ client.company_name }}</h1>
+    <p>{{ client.industry|default:"" }} — {{ client.city|default:"" }}</p>
+  </div>
+  <a href="/clients/" class="btn btn-outline">Back</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Client Details</span>
+  </div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div>
+        <div class="form-note">Company Name</div>
+        <div style="font-weight:600;margin-top:0.25rem">{{ client.company_name }}</div>
+      </div>
+      <div>
+        <div class="form-note">Contact Person</div>
+        <div style="font-weight:600;margin-top:0.25rem">{{ client.contact_person }}</div>
+      </div>
+      <div>
+        <div class="form-note">Email</div>
+        <div style="margin-top:0.25rem">{{ client.email|default:"—" }}</div>
+      </div>
+      <div>
+        <div class="form-note">Phone</div>
+        <div style="margin-top:0.25rem">{{ client.phone|default:"—" }}</div>
+      </div>
+      <div>
+        <div class="form-note">City</div>
+        <div style="margin-top:0.25rem">{{ client.city|default:"—" }}</div>
+      </div>
+      <div>
+        <div class="form-note">Industry</div>
+        <div style="margin-top:0.25rem">{{ client.industry|default:"—" }}</div>
+      </div>
+    </div>
+    {% if client.address %}
+    <div style="margin-top:1rem">
+      <div class="form-note">Address</div>
+      <div style="margin-top:0.25rem">{{ client.address }}</div>
+    </div>
+    {% endif %}
+    {% if client.notes %}
+    <div style="margin-top:1rem">
+      <div class="form-note">Notes</div>
+      <div style="margin-top:0.25rem">{{ client.notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

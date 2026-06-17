@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block title %}Add Material{% endblock %}
+{% block page_title %}Add Material{% endblock %}
+{% block breadcrumb %}ZIVARK / Materials / Add{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.section-divider { margin: 1.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #F1F5F9; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B; }
+.helper-box { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.78rem; color: #1E40AF; }
+.field-group { display: none; }
+.field-group.show { display: grid; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Add Material</h1>
+    <p>Add a material that your factory uses</p>
+  </div>
+  <a href="/materials/" class="btn btn-outline">Back</a>
+</div>
+
+<div class="card" style="max-width:700px">
+  <div class="card-body">
+    <form method="POST" id="mat-form">
+      {% csrf_token %}
+
+      <div class="helper-box" id="helper-text">
+        Select a category to see relevant fields
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Category *</label>
+          <select name="category" id="category" onchange="updateFields()" required>
+            <option value="">Select category</option>
+            {% for val, label in categories %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Material Name *</label>
+          <input type="text" name="name" id="mat-name" placeholder="e.g. Rubber Wood 2x3 AD" required>
+        </div>
+      </div>
+
+      <!-- SOLID WOOD FIELDS -->
+      <div id="solid-wood-fields" class="field-group">
+        <div class="section-divider">Solid Wood Details</div>
+        <div class="form-grid" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label>Wood Type</label>
+            <input type="text" name="wood_type" placeholder="e.g. Pinewood, Rubber Wood, Sal, Teak">
+            <div class="form-note">Free text — enter exactly what you have</div>
+          </div>
+          <div class="form-group">
+            <label>Grade</label>
+            <select name="wood_grade">
+              {% for val, label in grades %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Width (mm)</label>
+            <input type="number" name="width_mm" placeholder="50" step="0.1">
+            <div class="form-note">e.g. 2x3 Pine → 50mm width</div>
+          </div>
+          <div class="form-group">
+            <label>Height (mm)</label>
+            <input type="number" name="height_mm" placeholder="75" step="0.1">
+            <div class="form-note">e.g. 2x3 Pine → 75mm height</div>
+          </div>
+          <div class="form-group">
+            <label>Rate (₹ per CFT)</label>
+            <input type="number" name="rate" placeholder="841" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>UOM</label>
+            <select name="uom">
+              <option value="CFT" selected>CFT - Cubic Feet</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLYWOOD FIELDS -->
+      <div id="plywood-fields" class="field-group">
+        <div class="section-divider">Plywood / Sheet Details</div>
+        <div class="form-grid" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label>Grade</label>
+            <select name="wood_grade">
+              <option value="BWR">BWR - Boiling Water Resistant</option>
+              <option value="BWP">BWP - Marine Grade</option>
+              <option value="COM">Commercial Grade</option>
+              <option value="AD">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Thickness (mm)</label>
+            <input type="number" name="thickness_mm" placeholder="8" step="0.1">
+            <div class="form-note">e.g. 8mm, 12mm, 18mm</div>
+          </div>
+          <div class="form-group">
+            <label>Rate (₹ per SQM)</label>
+            <input type="number" name="rate" placeholder="339" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>UOM</label>
+            <select name="uom">
+              <option value="SQM" selected>SQM - Square Meter</option>
+              <option value="SQF">SQF - Square Feet</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- HARDWARE FIELDS -->
+      <div id="hardware-fields" class="field-group">
+        <div class="section-divider">Hardware Details</div>
+        <div class="form-grid" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label>Specification</label>
+            <input type="text" name="description" placeholder="e.g. M10x12, 32mm, 50mm">
+          </div>
+          <div class="form-group">
+            <label>Rate</label>
+            <input type="number" name="rate" placeholder="18" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>UOM</label>
+            <select name="uom">
+              <option value="NOS">NOS - Numbers</option>
+              <option value="MTR">MTR - Meter</option>
+              <option value="KG">KG - Kilogram</option>
+              <option value="SQM">SQM - Square Meter</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONSUMABLE FIELDS -->
+      <div id="consumable-fields" class="field-group">
+        <div class="section-divider">Consumable Details</div>
+        <div class="form-grid" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" name="description" placeholder="e.g. 50 micron, 200 GSM">
+          </div>
+          <div class="form-group">
+            <label>Rate</label>
+            <input type="number" name="rate" placeholder="9" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>UOM</label>
+            <select name="uom">
+              <option value="SQM">SQM - Square Meter</option>
+              <option value="NOS">NOS - Numbers</option>
+              <option value="KG">KG - Kilogram</option>
+              <option value="MTR">MTR - Meter</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEEL FIELDS -->
+      <div id="steel-fields" class="field-group">
+        <div class="section-divider">Steel Details</div>
+        <div class="form-grid" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label>Section Type</label>
+            <input type="text" name="description" placeholder="e.g. ISMC 150, I-Beam 200, SHS 100x100">
+          </div>
+          <div class="form-group">
+            <label>Weight per meter (kg/m)</label>
+            <input type="number" name="width_mm" placeholder="16.8" step="0.01">
+            <div class="form-note">Standard section weight from steel tables</div>
+          </div>
+          <div class="form-group">
+            <label>Rate (₹ per KG)</label>
+            <input type="number" name="rate" placeholder="65" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>UOM</label>
+            <select name="uom">
+              <option value="KG" selected>KG - Kilogram</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label>Notes (optional)</label>
+        <textarea name="notes" placeholder="Supplier info, quality notes, etc."></textarea>
+      </div>
+
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn btn-primary">Save Material</button>
+        <a href="/materials/" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const helpers = {
+  solid_wood:  'Solid wood (Pinewood, Rubber Wood, Sal, Teak etc) — calculated using CFT formula',
+  plywood:     'Sheet material (Plywood, OSB, MDF) — calculated using SQM formula',
+  hardware:    'Hardware items (Nails, Nut Bolt, Lashing Belt etc) — Rate × Quantity',
+  consumable:  'Consumables (VCI Film, Silica Gel, Stretch Wrap etc)',
+  steel:       'Steel sections (I-Beam, C-Channel) — Weight per meter × Length × Rate/KG',
+  other:       'Any other material',
+};
+
+function updateFields() {
+  const cat = document.getElementById('category').value;
+
+  // Hide all
+  document.querySelectorAll('.field-group').forEach(el => el.classList.remove('show'));
+
+  // Show relevant
+  if (cat === 'solid_wood') {
+    document.getElementById('solid-wood-fields').classList.add('show');
+    document.getElementById('solid-wood-fields').style.gridTemplateColumns = 'repeat(3,1fr)';
+    document.getElementById('solid-wood-fields').style.gap = '1rem';
+  } else if (cat === 'plywood') {
+    document.getElementById('plywood-fields').classList.add('show');
+    document.getElementById('plywood-fields').style.gridTemplateColumns = 'repeat(2,1fr)';
+    document.getElementById('plywood-fields').style.gap = '1rem';
+  } else if (cat === 'hardware') {
+    document.getElementById('hardware-fields').classList.add('show');
+    document.getElementById('hardware-fields').style.gridTemplateColumns = 'repeat(3,1fr)';
+    document.getElementById('hardware-fields').style.gap = '1rem';
+  } else if (cat === 'consumable') {
+    document.getElementById('consumable-fields').classList.add('show');
+    document.getElementById('consumable-fields').style.gridTemplateColumns = 'repeat(3,1fr)';
+    document.getElementById('consumable-fields').style.gap = '1rem';
+  } else if (cat === 'steel') {
+    document.getElementById('steel-fields').classList.add('show');
+    document.getElementById('steel-fields').style.gridTemplateColumns = 'repeat(2,1fr)';
+    document.getElementById('steel-fields').style.gap = '1rem';
+  }
+
+  // Update helper
+  document.getElementById('helper-text').textContent = helpers[cat] || 'Select a category';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+zivark-env/
+__pycache__/
+*.pyc
+*.pyo
+zivark_dev.db
+*.db
+media/
+staticfiles/
+output/
+.env
+*.log
