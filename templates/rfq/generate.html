@@ -19,8 +19,6 @@
 .totals-row { display: flex; justify-content: space-between; padding: 0.35rem 0; font-size: 0.82rem; color: #64748B; border-bottom: 1px solid #F1F5F9; }
 .totals-row.grand { background: #0F172A; color: #fff; padding: 0.6rem 0.75rem; border-radius: 4px; margin-top: 0.5rem; font-weight: 700; font-size: 0.95rem; border: none; }
 .totals-row.grand span:last-child { color: #3B82F6; }
-
-/* EDITOR */
 .editor-panel { background: #fff; border: 2px solid #3B82F6; border-radius: 8px; overflow: hidden; margin-top: 1.5rem; }
 .editor-header { background: #0F172A; color: #fff; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center; }
 .formula-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #F0F4F8; border-bottom: 2px solid #E2E8F0; }
@@ -40,11 +38,12 @@
 
 {% block topbar_actions %}
 <a href="/rfq/{{ rfq.pk }}/" class="btn btn-outline btn-sm">Back to RFQ</a>
+<a href="/rfq/{{ rfq.pk }}/excel/" class="btn btn-success btn-sm">Download Excel</a>
 {% endblock %}
 
 {% block content %}
 
-<!-- SUMMARY -->
+<!-- SUMMARY CARDS -->
 <div class="summary-grid">
   <div class="summary-card">
     <div class="summary-label">Quotation No</div>
@@ -84,33 +83,23 @@
     </span>
   </div>
 
-  <!-- OD BAR -->
   <div class="od-bar">
     <div class="od-chip"><span>Box ID:</span>{{ r.box.box_id_length|floatformat:0 }} × {{ r.box.box_id_width|floatformat:0 }} × {{ r.box.box_id_height|floatformat:0 }} mm</div>
     <div class="od-chip"><span>Box OD:</span>{{ r.design.box_od_l|floatformat:0 }} × {{ r.design.box_od_w|floatformat:0 }} × {{ r.design.box_od_h|floatformat:0 }} mm</div>
     <div class="od-chip"><span>CBM:</span>{{ r.box.volume_cbm }}</div>
     <div class="od-chip"><span>Area:</span>{{ r.box.total_area_sqm }} SQM</div>
-    {% if r.design.rule %}
-    <div class="od-chip"><span>Rule:</span>{{ r.design.rule.name }}</div>
-    {% endif %}
+    {% if r.design.rule %}<div class="od-chip"><span>Rule:</span>{{ r.design.rule.name }}</div>{% endif %}
   </div>
 
-  <!-- BOM TABLE -->
   <div class="table-wrap">
     <table class="bom-table" id="main-bom-table-{{ r.box.pk }}">
       <thead>
         <tr>
-          <th>SR</th>
-          <th>Description</th>
-          <th>Material</th>
-          <th class="num">L (MM)</th>
-          <th class="num">W (MM)</th>
-          <th class="num">H/T (MM)</th>
-          <th class="num">QTY NOS</th>
-          <th class="num">Total QTY</th>
-          <th>UOM</th>
-          <th class="num">Rate/UOM</th>
-          <th class="num">Total</th>
+          <th>SR</th><th>Description</th><th>Material</th>
+          <th class="num">L (MM)</th><th class="num">W (MM)</th>
+          <th class="num">H/T (MM)</th><th class="num">QTY NOS</th>
+          <th class="num">Total QTY</th><th>UOM</th>
+          <th class="num">Rate/UOM</th><th class="num">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -132,40 +121,21 @@
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="10" style="text-align:right;color:#64748B;font-size:0.78rem">Total Cost</td>
-          <td class="num" style="font-weight:700">₹{{ r.totals.total_cost|floatformat:0 }}</td>
+          <td colspan="10" style="text-align:right;color:#64748B;font-size:0.78rem;padding:0.5rem 0.75rem">Total Cost</td>
+          <td class="num" style="font-weight:700;padding:0.5rem 0.75rem">₹{{ r.totals.total_cost|floatformat:0 }}</td>
         </tr>
       </tfoot>
     </table>
   </div>
 
-  <!-- TOTALS -->
   <div class="totals-section">
     <div class="totals-grid">
-      <div class="totals-row">
-        <span>Total Cost</span>
-        <span>₹{{ r.totals.total_cost|floatformat:0 }}</span>
-      </div>
-      <div class="totals-row">
-        <span>Overhead {{ r.totals.overhead_pct }}%</span>
-        <span>₹{{ r.totals.overhead_amount|floatformat:0 }}</span>
-      </div>
-      <div class="totals-row">
-        <span>After Overhead</span>
-        <span>₹{{ r.totals.after_overhead|floatformat:0 }}</span>
-      </div>
-      <div class="totals-row">
-        <span>Margin {{ r.totals.margin_pct }}%</span>
-        <span>₹{{ r.totals.margin_amount|floatformat:0 }}</span>
-      </div>
-      <div class="totals-row">
-        <span>Before GST</span>
-        <span>₹{{ r.totals.before_gst|floatformat:0 }}</span>
-      </div>
-      <div class="totals-row">
-        <span>GST {{ r.totals.gst_pct }}%</span>
-        <span>₹{{ r.totals.gst_amount|floatformat:0 }}</span>
-      </div>
+      <div class="totals-row"><span>Total Cost</span><span>₹{{ r.totals.total_cost|floatformat:0 }}</span></div>
+      <div class="totals-row"><span>Overhead {{ r.totals.overhead_pct }}%</span><span>₹{{ r.totals.overhead_amount|floatformat:0 }}</span></div>
+      <div class="totals-row"><span>After Overhead</span><span>₹{{ r.totals.after_overhead|floatformat:0 }}</span></div>
+      <div class="totals-row"><span>Margin {{ r.totals.margin_pct }}%</span><span>₹{{ r.totals.margin_amount|floatformat:0 }}</span></div>
+      <div class="totals-row"><span>Before GST</span><span>₹{{ r.totals.before_gst|floatformat:0 }}</span></div>
+      <div class="totals-row"><span>GST {{ r.totals.gst_pct }}%</span><span>₹{{ r.totals.gst_amount|floatformat:0 }}</span></div>
       <div class="totals-row grand">
         <span>Grand Total</span>
         <span id="bom-grand-total">₹{{ r.totals.grand_total|floatformat:0 }}</span>
@@ -181,17 +151,33 @@
     <div class="editor-header">
       <span style="font-weight:700;font-size:0.9rem">Edit Costing Sheet — Formula View</span>
       <div style="display:flex;gap:0.5rem">
-        <button onclick="applyChanges()" style="background:#3B82F6;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">Apply</button>
-        <button onclick="resetChanges()" style="background:#475569;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">Reset</button>
-        <button onclick="toggleEditor()" style="background:#DC2626;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">Close</button>
+        <button onclick="applyChanges()"
+          style="background:#3B82F6;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">
+          Apply
+        </button>
+        <button onclick="downloadEdited()"
+          style="background:#059669;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">
+          Download Excel
+        </button>
+        <button onclick="resetChanges()"
+          style="background:#475569;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">
+          Reset
+        </button>
+        <button onclick="toggleEditor()"
+          style="background:#DC2626;color:#fff;border:none;padding:0.4rem 1rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.82rem">
+          Close
+        </button>
       </div>
     </div>
+
     <div class="formula-bar">
       <span class="fx-badge">fx</span>
       <input type="text" id="formula-bar"
         placeholder="Click a cell to see formula — edit and press Enter to apply">
     </div>
+
     <div id="hot-container" style="width:100%;height:520px"></div>
+
     <div class="live-totals">
       <div class="lt-item">
         <div class="lt-label">Total Cost</div>
@@ -226,7 +212,7 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/handsontable@12.4.0/dist/handsontable.full.min.js"></script>
 <script>
-// ── DIMENSIONS ────────────────────────────
+// ── DIMENSIONS ──────────────────────────────────────
 {% for r in results %}
 const OD_L = {{ r.design.box_od_l|default:0 }};
 const OD_W = {{ r.design.box_od_w|default:0 }};
@@ -238,45 +224,47 @@ const MARGIN_PCT   = {{ r.totals.margin_pct|default:25 }};
 const GST_PCT      = {{ r.totals.gst_pct|default:12 }};
 {% endfor %}
 
-// ── BOM DATA ──────────────────────────────
+// ── BOM DATA ────────────────────────────────────────
 const ORIGINAL_BOM = [
 {% for r in results %}{% for item in r.bom %}{
-  sr: {{ item.sr_no }},
-  desc: "{{ item.description|escapejs }}",
-  material: "{{ item.material|escapejs }}",
-  l: {{ item.length_mm|default:0 }},
-  w: {{ item.width_mm|default:0 }},
-  h: {{ item.thickness_mm|default:0 }},
-  qty_nos: {{ item.qty_nos }},
+  sr:        {{ item.sr_no }},
+  desc:      "{{ item.description|escapejs }}",
+  material:  "{{ item.material|escapejs }}",
+  l:         {{ item.length_mm|default:0 }},
+  w:         {{ item.width_mm|default:0 }},
+  h:         {{ item.thickness_mm|default:0 }},
+  qty_nos:   {{ item.qty_nos }},
   total_qty: {{ item.total_qty }},
-  uom: "{{ item.uom }}",
-  rate: {{ item.rate_per_uom }},
-  total: {{ item.total_cost }},
+  uom:       "{{ item.uom }}",
+  rate:      {{ item.rate_per_uom }},
+  total:     {{ item.total_cost }},
 },{% endfor %}{% endfor %}
 ];
 
-let hot = null;
-let selectedRow = -1;
-let selectedCol = -1;
-let skipNext    = false;
+// ── STATE ───────────────────────────────────────────
+let hot          = null;
+let selectedRow  = -1;
+let selectedCol  = -1;
+let skipNext     = false;
 let formulaStore = {};
 
-// ── PITCH MAP ─────────────────────────────
+// ── PITCH MAP ───────────────────────────────────────
 const PITCH_MAP = {
-  'Deck':             { v:'OD_L', d:()=>OD_L, m:1 },
-  'Length Runner':    { v:'OD_W', d:()=>OD_W, m:1 },
-  'Width Runner':     { v:'OD_L', d:()=>OD_L, m:1 },
-  'Length Beading-L': { v:'ID_H', d:()=>ID_H, m:2 },
-  'Length Beading-H': { v:'OD_L', d:()=>OD_L, m:2 },
-  'Width Beading-W':  { v:'ID_H', d:()=>ID_H, m:2 },
-  'Width Beading-H':  { v:'OD_W', d:()=>OD_W, m:2 },
-  'Top Beading-L':    { v:'OD_W', d:()=>OD_W, m:2 },
-  'Top Beading-W':    { v:'OD_L', d:()=>OD_L, m:2 },
-  'Top Chocking':     { v:'OD_L', d:()=>OD_L, m:1 },
-  'Bottom Chocking':  { v:'OD_W', d:()=>OD_W, m:1 },
+  'Deck':             { v: 'OD_L', d: () => OD_L, m: 1 },
+  'Length Runner':    { v: 'OD_W', d: () => OD_W, m: 1 },
+  'Width Runner':     { v: 'OD_L', d: () => OD_L, m: 1 },
+  'Length Beading-L': { v: 'ID_H', d: () => ID_H, m: 2 },
+  'Length Beading-H': { v: 'OD_L', d: () => OD_L, m: 2 },
+  'Width Beading-W':  { v: 'ID_H', d: () => ID_H, m: 2 },
+  'Width Beading-H':  { v: 'OD_W', d: () => OD_W, m: 2 },
+  'Top Beading-L':    { v: 'OD_W', d: () => OD_W, m: 2 },
+  'Top Beading-W':    { v: 'OD_L', d: () => OD_L, m: 2 },
+  'Top Chocking':     { v: 'OD_L', d: () => OD_L, m: 1 },
+  'Bottom Chocking':  { v: 'OD_W', d: () => OD_W, m: 1 },
 };
 
-function getFormula(desc, qty, row) {
+// ── FORMULA HELPERS ─────────────────────────────────
+function getQtyFormula(desc, qty) {
   const entry = Object.entries(PITCH_MAP).find(([k]) => desc.includes(k));
   if (entry) {
     const [k, info] = entry;
@@ -287,7 +275,8 @@ function getFormula(desc, qty, row) {
   }
   if (desc.includes('Lashing')) return `=ROUNDUP(OD_L/600,0)`;
   if (desc === 'Silica Gel')    return `=ROUNDUP(CBM*500/50,0)`;
-  if (desc.includes('N/B'))     return `=ROUNDUP((OD_L/250)*4+(OD_W/250)*4+(OD_H/250)*4,0)`;
+  if (desc.includes('N/B'))
+    return `=ROUNDUP((OD_L/250)*4+(OD_W/250)*4+(OD_H/250)*4,0)`;
   return null;
 }
 
@@ -300,12 +289,12 @@ function getSQMFormula(row) {
 }
 
 function getTotalFormula(row, uom, desc) {
-  if (uom==='MTR' || desc==='Silica Gel' || desc==='Tarpaulin')
+  if (uom === 'MTR' || desc === 'Silica Gel' || desc === 'Tarpaulin')
     return `=G${row}*H${row}*J${row}`;
   return `=H${row}*J${row}`;
 }
 
-// ── TOGGLE ────────────────────────────────
+// ── TOGGLE EDITOR ───────────────────────────────────
 function toggleEditor() {
   const panel = document.getElementById('editor-panel');
   const btn   = document.getElementById('edit-btn');
@@ -322,60 +311,53 @@ function toggleEditor() {
   }
 }
 
-// ── INIT EDITOR ───────────────────────────
+// ── INIT HANDSONTABLE ───────────────────────────────
 function initEditor() {
   const container = document.getElementById('hot-container');
   if (!container) return;
   if (hot) { hot.destroy(); hot = null; }
 
-  // Build data with formulas
-  const BOM_START_ROW = 13;
+  formulaStore = {};
+  const BOM_START_ROW = 14;
+
   const data = ORIGINAL_BOM.map((item, idx) => {
     const excelRow = BOM_START_ROW + idx;
     const uom      = item.uom.toUpperCase();
     const desc     = item.desc;
 
-    // L column
-    let l_val = item.l || '';
-    if (['Deck','Length Runner','Length Beading-L',
-         'Length Beading-H','Length Wall','Top Wall',
-         'Top Beading-L','Top Beading-W','Bottom Chocking'].some(k => desc.includes(k))) {
+    // L value based on description
+    let l_val = item.l || 0;
+    if (['Deck','Length Runner','Length Beading-L','Length Beading-H',
+         'Length Wall','Top Wall','Top Beading-L','Top Beading-W',
+         'Bottom Chocking'].some(k => desc.includes(k))) {
       l_val = OD_L;
     } else if (['Width Runner','Width Beading-W','Width Beading-H',
                 'Width Wall','Top Chocking'].some(k => desc.includes(k))) {
       l_val = OD_W;
+    } else if (desc.includes('Length Beading-H') ||
+               desc.includes('Width Beading-H')) {
+      l_val = ID_H;
     }
-
-    // QTY formula
-    const qtyFormula = getFormula(desc, item.qty_nos, excelRow);
-
-    // TOTAL QTY formula
-    let tqFormula;
-    if (uom === 'CFT' && item.l) {
-      tqFormula = getCFTFormula(excelRow);
-    } else if (uom === 'SQM' && item.l) {
-      tqFormula = getSQMFormula(excelRow);
-    } else {
-      tqFormula = item.total_qty;
-    }
-
-    // TOTAL formula
-    const totalFormula = getTotalFormula(excelRow, uom, desc);
 
     // Store formulas
     if (!formulaStore[idx]) formulaStore[idx] = {};
-    if (qtyFormula)    formulaStore[idx][6]  = qtyFormula;
-    if (typeof tqFormula === 'string' && tqFormula.startsWith('='))
-                       formulaStore[idx][7]  = tqFormula;
-    formulaStore[idx][10] = totalFormula;
-    if (l_val && String(l_val).startsWith('='))
-                       formulaStore[idx][3]  = l_val;
+
+    const qtyFormula = getQtyFormula(desc, item.qty_nos);
+    if (qtyFormula) formulaStore[idx][6] = qtyFormula;
+
+    if (uom === 'CFT' && item.l) {
+      formulaStore[idx][7] = getCFTFormula(excelRow);
+    } else if (uom === 'SQM' && item.l) {
+      formulaStore[idx][7] = getSQMFormula(excelRow);
+    }
+
+    formulaStore[idx][10] = getTotalFormula(excelRow, uom, desc);
 
     return [
       item.sr,
       item.desc,
       item.material,
-      item.l || '',
+      l_val || item.l || '',
       item.w || '',
       item.h || '',
       item.qty_nos,
@@ -388,110 +370,139 @@ function initEditor() {
 
   hot = new Handsontable(container, {
     data: data,
-    colHeaders: ['SR','Description','Material','L (mm)',
-                 'W (mm)','H/T (mm)','QTY NOS',
-                 'TOTAL QTY','UOM','Rate/UOM','TOTAL'],
+    colHeaders: [
+      'SR', 'Description', 'Material',
+      'L (mm)', 'W (mm)', 'H/T (mm)',
+      'QTY NOS', 'TOTAL QTY', 'UOM',
+      'Rate/UOM', 'TOTAL'
+    ],
     columns: [
-      { type:'numeric', readOnly:true, width:40 },
-      { type:'text', width:160 },
-      { type:'text', width:140 },
-      { type:'numeric', width:75 },
-      { type:'numeric', width:75 },
-      { type:'numeric', width:75 },
-      { type:'numeric', width:80 },
-      { type:'numeric', width:100 },
-      { type:'text', width:65 },
-      { type:'numeric', width:90 },
-      { type:'numeric', readOnly:true, width:110 },
+      { type: 'numeric', readOnly: true,  width: 40  },
+      { type: 'text',                     width: 160 },
+      { type: 'text',                     width: 140 },
+      { type: 'numeric',                  width: 75  },
+      { type: 'numeric',                  width: 75  },
+      { type: 'numeric',                  width: 75  },
+      { type: 'numeric',                  width: 80  },
+      { type: 'numeric',                  width: 100 },
+      { type: 'text',                     width: 65  },
+      { type: 'numeric',                  width: 90  },
+      { type: 'numeric', readOnly: true,  width: 110 },
     ],
     licenseKey: 'non-commercial-and-evaluation',
-    height: 500,
+    height:     500,
     rowHeaders: false,
-    stretchH: 'last',
+    stretchH:   'last',
 
+    // ── CELL SELECTION ──────────────────────────────
     afterSelection: function(row, col) {
       selectedRow = row;
       selectedCol = col;
       if (skipNext) { skipNext = false; return; }
 
-      const bar  = document.getElementById('formula-bar');
+      const bar = document.getElementById('formula-bar');
       if (!bar) return;
 
-      // Show formula if stored
       const stored = formulaStore[row] && formulaStore[row][col];
+      const val    = hot.getDataAtCell(row, col);
+      const d      = hot.getDataAtRow(row);
+      const desc   = d[1] || '';
+      const uom    = d[8] || '';
+      const l = d[3]||0, w = d[4]||0, h = d[5]||0;
+      const qty = d[6]||0, tq = d[7]||0, rate = d[9]||0;
+
       if (stored) {
-        const val = hot.getDataAtCell(row, col);
-        bar.value = `${stored}  =  ${val}`;
+        bar.value      = `${stored}  →  ${val}`;
         bar.style.color = '#3B82F6';
         return;
       }
 
-      // Otherwise show value
-      const d    = hot.getDataAtRow(row);
-      const desc = d[1] || '';
-      const uom  = d[8] || '';
-      const l=d[3]||0, w=d[4]||0, h=d[5]||0;
-      const qty=d[6]||0, tq=d[7]||0, rate=d[9]||0;
-
       if (col === 6) {
-        const f = getFormula(desc, qty, row + 13);
-        bar.value      = f ? `${f}  =  ${qty}` : String(qty);
+        const f        = getQtyFormula(desc, qty);
+        bar.value      = f ? `${f}  →  ${qty}` : String(qty);
         bar.style.color = '#7C3AED';
       } else if (col === 7) {
-        if (uom==='CFT'&&l)
-          bar.value = `=((${l}/1000)*(${w}/1000)*(${h}/1000))*${qty}*(3.28^3)*1.05  =  ${tq}`;
-        else if (uom==='SQM'&&l)
-          bar.value = `=(${l}/1000)*(${w}/1000)*${qty}*1.05  =  ${tq}`;
-        else bar.value = String(tq);
+        if (uom === 'CFT' && l)
+          bar.value = `=((${l}/1000)*(${w}/1000)*(${h}/1000))*${qty}*(3.28^3)*1.05  →  ${tq}`;
+        else if (uom === 'SQM' && l)
+          bar.value = `=(${l}/1000)*(${w}/1000)*${qty}*1.05  →  ${tq}`;
+        else
+          bar.value = String(tq);
         bar.style.color = '#059669';
       } else if (col === 10) {
-        bar.value = `=TOTAL_QTY × RATE  =  ${tq} × ${rate}  =  ₹${d[10]}`;
+        bar.value      = `=TOTAL_QTY × RATE  →  ${tq} × ${rate}  →  ₹${val}`;
         bar.style.color = '#059669';
       } else {
-        bar.value      = d[col] != null ? String(d[col]) : '';
+        bar.value      = val != null ? String(val) : '';
         bar.style.color = '#0F172A';
       }
     },
 
+    // ── CELL CHANGE ─────────────────────────────────
     afterChange: function(changes, source) {
       if (!changes || source === 'loadData' || source === 'recalc') return;
+
       changes.forEach(([row, col]) => {
         const d    = hot.getDataAtRow(row);
         const uom  = d[8] || '';
         const desc = d[1] || '';
-        const l=parseFloat(d[3])||0, w=parseFloat(d[4])||0, h=parseFloat(d[5])||0;
-        const qty=parseFloat(d[6])||0, rate=parseFloat(d[9])||0;
+        const l    = parseFloat(d[3]) || 0;
+        const w    = parseFloat(d[4]) || 0;
+        const h    = parseFloat(d[5]) || 0;
+        const qty  = parseFloat(d[6]) || 0;
+        const rate = parseFloat(d[9]) || 0;
 
-        if ([3,4,5,6].includes(col)) {
-          if (uom==='CFT' && l && w && h) {
+        // Recalculate TOTAL QTY when dimensions/qty change
+        if ([3, 4, 5, 6].includes(col)) {
+          if (uom === 'CFT' && l && w && h) {
             const cft = (l/1000)*(w/1000)*(h/1000)*qty*Math.pow(3.28,3)*1.05;
             hot.setDataAtCell(row, 7, Math.round(cft*10000)/10000, 'recalc');
-          } else if (uom==='SQM' && l && w) {
+          } else if (uom === 'SQM' && l && w) {
             const sqm = (l/1000)*(w/1000)*qty*1.05;
             hot.setDataAtCell(row, 7, Math.round(sqm*10000)/10000, 'recalc');
           }
         }
 
-        const tq    = parseFloat(hot.getDataAtCell(row,7)) || 0;
-        const total = (uom==='MTR'||desc==='Silica Gel'||desc==='Tarpaulin')
-                      ? qty*tq*rate : tq*rate;
+        // Recalculate TOTAL
+        const tq    = parseFloat(hot.getDataAtCell(row, 7)) || 0;
+        const total = (uom === 'MTR' || desc === 'Silica Gel' || desc === 'Tarpaulin')
+                      ? qty * tq * rate
+                      : tq * rate;
         hot.setDataAtCell(row, 10, Math.round(total*100)/100, 'recalc');
       });
+
       updateLiveTotals();
     },
 
+    // ── CELL RENDERERS ──────────────────────────────
     cells: function(row, col) {
       if (col === 10) return {
         readOnly: true,
         renderer: function(inst, td, r, c, p, v) {
           Handsontable.renderers.NumericRenderer.apply(this, arguments);
-          td.style.background  = '#F0FDF4';
-          td.style.fontWeight  = '700';
-          td.style.color       = '#059669';
-          td.style.textAlign   = 'right';
+          td.style.background = '#F0FDF4';
+          td.style.fontWeight = '700';
+          td.style.color      = '#059669';
+          td.style.textAlign  = 'right';
           td.innerHTML = v
-            ? '₹'+Number(v).toLocaleString('en-IN',{maximumFractionDigits:2})
+            ? '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 })
             : '₹0';
+        }
+      };
+      if (col === 7) return {
+        renderer: function(inst, td, r, c, p, v) {
+          Handsontable.renderers.NumericRenderer.apply(this, arguments);
+          td.style.background = '#EFF6FF';
+          td.style.color      = '#1E40AF';
+          td.style.textAlign  = 'right';
+        }
+      };
+      if (col === 6) return {
+        renderer: function(inst, td, r, c, p, v) {
+          Handsontable.renderers.NumericRenderer.apply(this, arguments);
+          td.style.background = '#FFFBEB';
+          td.style.color      = '#92400E';
+          td.style.textAlign  = 'right';
         }
       };
       if (col === 0) return { readOnly: true };
@@ -499,15 +510,15 @@ function initEditor() {
     },
   });
 
-  // Formula bar Enter key
+  // Formula bar — Enter to apply, Escape to cancel
   const bar = document.getElementById('formula-bar');
   if (bar) {
     bar.onkeydown = function(e) {
-      if (e.key === 'Enter') { e.preventDefault(); applyFormulaBar(); }
+      if (e.key === 'Enter')  { e.preventDefault(); applyFormulaBar(); }
       if (e.key === 'Escape') {
         if (hot && selectedRow >= 0) {
-          const val = hot.getDataAtCell(selectedRow, selectedCol);
-          bar.value = val != null ? String(val) : '';
+          const v = hot.getDataAtCell(selectedRow, selectedCol);
+          bar.value = v != null ? String(v) : '';
         }
       }
     };
@@ -516,26 +527,33 @@ function initEditor() {
   updateLiveTotals();
 }
 
-// ── FORMULA BAR APPLY ─────────────────────
+// ── APPLY FORMULA BAR ───────────────────────────────
 function applyFormulaBar() {
   if (!hot || selectedRow < 0) return;
-  const row = selectedRow, col = selectedCol;
+  const row = selectedRow;
+  const col = selectedCol;
   const bar = document.getElementById('formula-bar');
   if (!bar) return;
 
   let raw = bar.value.trim();
-  const eqIdx = raw.lastIndexOf('  =  ');
-  if (eqIdx > 0) raw = raw.substring(0, eqIdx).trim();
-  const userFormula = raw;
 
-  const d   = hot.getDataAtRow(row);
-  const uom = d[8] || '', desc = d[1] || '';
+  // Strip the " → result" suffix if present
+  const arrowIdx = raw.lastIndexOf('  →  ');
+  if (arrowIdx > 0) raw = raw.substring(0, arrowIdx).trim();
+
+  const userFormula = raw;
+  const d    = hot.getDataAtRow(row);
+  const uom  = d[8] || '';
+  const desc = d[1] || '';
   let result;
 
   if (raw.startsWith('=')) {
+    // Evaluate formula
     let expr = raw.substring(1)
-      .replace(/OD_L/g, OD_L).replace(/OD_W/g, OD_W)
-      .replace(/OD_H/g, OD_H).replace(/ID_H/g, ID_H)
+      .replace(/OD_L/g, OD_L)
+      .replace(/OD_W/g, OD_W)
+      .replace(/OD_H/g, OD_H)
+      .replace(/ID_H/g, ID_H)
       .replace(/CBM/g,  CBM)
       .replace(/\^/g,   '**')
       .replace(/ROUNDUP\(([^,]+),\s*(\d+)\)/g,
@@ -544,67 +562,72 @@ function applyFormulaBar() {
       result = Math.round(eval(expr) * 10000) / 10000;
     } catch(err) {
       bar.style.borderColor = '#DC2626';
-      setTimeout(() => bar.style.borderColor = '', 1200);
+      setTimeout(() => bar.style.borderColor = '#E2E8F0', 1200);
       return;
     }
   } else {
     result = parseFloat(raw);
     if (isNaN(result)) {
-      if (col===1||col===2) hot.setDataAtCell(row, col, raw);
+      // Text value for description/material columns
+      if (col === 1 || col === 2) {
+        hot.setDataAtCell(row, col, raw);
+      }
       return;
     }
   }
 
-  // Save formula
+  // Store formula
   if (!formulaStore[row]) formulaStore[row] = {};
   if (userFormula.startsWith('=')) formulaStore[row][col] = userFormula;
 
+  // Set value
   hot.setDataAtCell(row, col, result);
 
-  const l=parseFloat(hot.getDataAtCell(row,3))||0;
-  const w=parseFloat(hot.getDataAtCell(row,4))||0;
-  const h=parseFloat(hot.getDataAtCell(row,5))||0;
-  const qty=parseFloat(hot.getDataAtCell(row,6))||0;
-  const rate=parseFloat(hot.getDataAtCell(row,9))||0;
-  let tq = parseFloat(hot.getDataAtCell(row,7))||0;
+  // Cascade recalculations
+  const l    = parseFloat(hot.getDataAtCell(row, 3)) || 0;
+  const w    = parseFloat(hot.getDataAtCell(row, 4)) || 0;
+  const h    = parseFloat(hot.getDataAtCell(row, 5)) || 0;
+  const qty  = parseFloat(hot.getDataAtCell(row, 6)) || 0;
+  const rate = parseFloat(hot.getDataAtCell(row, 9)) || 0;
+  let tq     = parseFloat(hot.getDataAtCell(row, 7)) || 0;
 
-  if ([3,4,5,6].includes(col)) {
-    if (uom==='CFT'&&l&&w&&h) {
+  if ([3, 4, 5, 6].includes(col)) {
+    if (uom === 'CFT' && l && w && h) {
       tq = Math.round((l/1000)*(w/1000)*(h/1000)*qty*Math.pow(3.28,3)*1.05*10000)/10000;
       hot.setDataAtCell(row, 7, tq, 'recalc');
-    } else if (uom==='SQM'&&l&&w) {
+    } else if (uom === 'SQM' && l && w) {
       tq = Math.round((l/1000)*(w/1000)*qty*1.05*10000)/10000;
       hot.setDataAtCell(row, 7, tq, 'recalc');
     }
   }
 
-  if ([3,4,5,6,7,9].includes(col)) {
-    const fq   = parseFloat(hot.getDataAtCell(row,6))||0;
-    const ftq  = parseFloat(hot.getDataAtCell(row,7))||0;
-    const frate= parseFloat(hot.getDataAtCell(row,9))||0;
-    const tot  = (uom==='MTR'||desc==='Silica Gel'||desc==='Tarpaulin')
-                 ? fq*ftq*frate : ftq*frate;
+  if ([3, 4, 5, 6, 7, 9].includes(col)) {
+    const ftq   = parseFloat(hot.getDataAtCell(row, 7)) || 0;
+    const fqty  = parseFloat(hot.getDataAtCell(row, 6)) || 0;
+    const frate = parseFloat(hot.getDataAtCell(row, 9)) || 0;
+    const tot   = (uom === 'MTR' || desc === 'Silica Gel' || desc === 'Tarpaulin')
+                  ? fqty * ftq * frate
+                  : ftq * frate;
     hot.setDataAtCell(row, 10, Math.round(tot*100)/100, 'recalc');
   }
 
-  const finalQty = parseFloat(hot.getDataAtCell(row,6))||0;
-  if (col===6) {
-    bar.value = `${userFormula}  =  ${finalQty}`;
-    bar.style.color = '#7C3AED';
-  } else {
-    bar.value = String(result);
-  }
+  // Update formula bar display
+  const finalVal = parseFloat(hot.getDataAtCell(row, col)) || result;
+  bar.value      = userFormula.startsWith('=')
+                   ? `${userFormula}  →  ${finalVal}`
+                   : String(finalVal);
+  bar.style.color = userFormula.startsWith('=') ? '#3B82F6' : '#0F172A';
 
   updateLiveTotals();
   skipNext = true;
   hot.selectCell(row, col);
 }
 
-// ── LIVE TOTALS ───────────────────────────
+// ── LIVE TOTALS ─────────────────────────────────────
 function updateLiveTotals() {
   if (!hot) return;
   let tc = 0;
-  hot.getData().forEach(r => tc += parseFloat(r[10]) || 0);
+  hot.getData().forEach(r => { tc += parseFloat(r[10]) || 0; });
 
   const oh  = tc * OVERHEAD_PCT / 100;
   const aoh = tc + oh;
@@ -616,21 +639,21 @@ function updateLiveTotals() {
   const fmt = v => '₹' + Math.round(v).toLocaleString('en-IN');
   const el  = id => document.getElementById(id);
 
-  if (el('lt-total'))    el('lt-total').textContent    = fmt(tc);
-  if (el('lt-overhead')) el('lt-overhead').textContent = fmt(oh);
-  if (el('lt-after'))    el('lt-after').textContent    = fmt(aoh);
-  if (el('lt-margin'))   el('lt-margin').textContent   = fmt(mg);
+  if (el('lt-total'))     el('lt-total').textContent     = fmt(tc);
+  if (el('lt-overhead'))  el('lt-overhead').textContent  = fmt(oh);
+  if (el('lt-after'))     el('lt-after').textContent     = fmt(aoh);
+  if (el('lt-margin'))    el('lt-margin').textContent    = fmt(mg);
   if (el('lt-before-gst')) el('lt-before-gst').textContent = fmt(bg);
-  if (el('lt-grand'))    el('lt-grand').textContent    = fmt(gt);
+  if (el('lt-grand'))     el('lt-grand').textContent     = fmt(gt);
 }
 
-// ── APPLY CHANGES ─────────────────────────
+// ── APPLY CHANGES ───────────────────────────────────
 function applyChanges() {
   if (!hot) return;
   const allData = hot.getData();
 
   let tc = 0;
-  allData.forEach(r => tc += parseFloat(r[10]) || 0);
+  allData.forEach(r => { tc += parseFloat(r[10]) || 0; });
   const oh  = tc * OVERHEAD_PCT / 100;
   const aoh = tc + oh;
   const mg  = aoh * MARGIN_PCT / 100;
@@ -639,7 +662,6 @@ function applyChanges() {
   const gt  = bg + gst;
   const fmt = v => '₹' + Math.round(v).toLocaleString('en-IN');
 
-  // Update summary cards
   const el = id => document.getElementById(id);
   if (el('card-before-gst'))  el('card-before-gst').textContent  = fmt(bg);
   if (el('card-grand-total')) el('card-grand-total').textContent  = fmt(gt);
@@ -660,25 +682,55 @@ function applyChanges() {
   };
 
   updateLiveTotals();
-  alert('Changes applied!');
+  alert('Changes applied! Click Download Excel to get the updated sheet.');
 }
 
-// ── RESET ─────────────────────────────────
+// ── DOWNLOAD EDITED EXCEL ───────────────────────────
+function downloadEdited() {
+  const allData = hot ? hot.getData() : null;
+
+  const form  = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/rfq/{{ rfq.pk }}/excel/';
+
+  const csrf  = document.createElement('input');
+  csrf.type   = 'hidden';
+  csrf.name   = 'csrfmiddlewaretoken';
+  csrf.value  = '{{ csrf_token }}';
+  form.appendChild(csrf);
+
+  if (allData) {
+    const bom   = document.createElement('input');
+    bom.type    = 'hidden';
+    bom.name    = 'edited_bom';
+    bom.value   = JSON.stringify(allData);
+    form.appendChild(bom);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+}
+
+// ── RESET ───────────────────────────────────────────
 function resetChanges() {
   if (!hot) return;
-  if (!confirm('Reset to original values?')) return;
-  hot.loadData(ORIGINAL_BOM.map(i => [
-    i.sr, i.desc, i.material,
-    i.l||'', i.w||'', i.h||'',
-    i.qty_nos, i.total_qty, i.uom, i.rate, i.total
-  ]));
+  if (!confirm('Reset all changes to original values?')) return;
+
   formulaStore = {};
   window.editedBomData = null;
   window.editedTotals  = null;
+
+  hot.loadData(ORIGINAL_BOM.map(i => [
+    i.sr, i.desc, i.material,
+    i.l || '', i.w || '', i.h || '',
+    i.qty_nos, i.total_qty, i.uom, i.rate, i.total
+  ]));
+
   updateLiveTotals();
 }
 
-// Warn before leaving if unsaved
+// ── WARN BEFORE LEAVE ───────────────────────────────
 window.addEventListener('beforeunload', function(e) {
   if (window.editedBomData) {
     e.preventDefault();

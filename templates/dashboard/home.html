@@ -8,109 +8,402 @@
 <a href="/rfq/new/" class="btn btn-primary btn-sm">+ New RFQ</a>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+/* STAT CARDS */
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-box { background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 1.25rem; position: relative; overflow: hidden; }
+.stat-box::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.stat-box.blue::before   { background:#3B82F6; }
+.stat-box.green::before  { background:#059669; }
+.stat-box.amber::before  { background:#F59E0B; }
+.stat-box.red::before    { background:#DC2626; }
+.stat-box.purple::before { background:#8B5CF6; }
+.stat-box.teal::before   { background:#0D9488; }
+.stat-box.indigo::before { background:#4F46E5; }
+.stat-box.pink::before   { background:#EC4899; }
+.stat-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#64748B; }
+.stat-value { font-size:2rem; font-weight:900; color:#0F172A; margin:0.3rem 0; font-family:'Courier New',monospace; line-height:1; }
+.stat-sub { font-size:0.7rem; color:#94A3B8; }
+.stat-icon { position:absolute; right:1rem; top:50%; transform:translateY(-50%); font-size:2.5rem; opacity:0.08; }
+
+/* CHART CARDS */
+.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.charts-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.chart-card { background:#fff; border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; }
+.chart-header { padding:1rem 1.25rem; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between; align-items:center; }
+.chart-title { font-size:0.85rem; font-weight:700; color:#0F172A; }
+.chart-sub { font-size:0.7rem; color:#94A3B8; }
+.chart-body { padding:1.25rem; }
+canvas { max-width:100% !important; }
+
+/* STATUS BADGES */
+.badge-draft     { background:#F1F5F9; color:#475569; }
+.badge-progress  { background:#FEF3C7; color:#92400E; }
+.badge-sent      { background:#DBEAFE; color:#1E40AF; }
+.badge-won       { background:#D1FAE5; color:#065F46; }
+.badge-lost      { background:#FEE2E2; color:#991B1B; }
+
+/* TABLE */
+.dash-table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+.dash-table th { background:#F8FAFC; padding:0.6rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#64748B; border-bottom:1px solid #E2E8F0; }
+.dash-table td { padding:0.7rem 1rem; border-bottom:1px solid #F8FAFC; vertical-align:middle; color:#374151; }
+.dash-table tr:last-child td { border-bottom:none; }
+.dash-table tr:hover td { background:#FAFBFC; }
+
+/* WIN RATE CIRCLE */
+.win-rate-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1.5rem; }
+.win-rate-value { font-size:3rem; font-weight:900; color:#059669; font-family:monospace; }
+.win-rate-label { font-size:0.72rem; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<!-- STATS -->
-<div class="stats-grid">
-  <div class="stat-card" style="border-top-color:#3B82F6">
+<!-- STAT CARDS ROW 1 -->
+<div class="stats-row">
+  <div class="stat-box blue">
     <div class="stat-label">Total RFQs</div>
-    <div class="stat-value">0</div>
+    <div class="stat-value">{{ total_rfqs }}</div>
     <div class="stat-sub">All time</div>
+    <div class="stat-icon">📋</div>
   </div>
-  <div class="stat-card" style="border-top-color:#F59E0B">
-    <div class="stat-label">Pending</div>
-    <div class="stat-value">0</div>
-    <div class="stat-sub">Needs action</div>
+  <div class="stat-box amber">
+    <div class="stat-label">In Progress</div>
+    <div class="stat-value">{{ in_progress }}</div>
+    <div class="stat-sub">Active quotations</div>
+    <div class="stat-icon">⚙</div>
   </div>
-  <div class="stat-card" style="border-top-color:#8B5CF6">
+  <div class="stat-box purple">
     <div class="stat-label">Sent</div>
-    <div class="stat-value">0</div>
-    <div class="stat-sub">To customer</div>
+    <div class="stat-value">{{ sent }}</div>
+    <div class="stat-sub">Awaiting response</div>
+    <div class="stat-icon">📤</div>
   </div>
-  <div class="stat-card" style="border-top-color:#059669">
+  <div class="stat-box green">
     <div class="stat-label">Won</div>
-    <div class="stat-value">0</div>
+    <div class="stat-value">{{ won }}</div>
     <div class="stat-sub">Orders confirmed</div>
-  </div>
-  <div class="stat-card" style="border-top-color:#EC4899">
-    <div class="stat-label">Revenue</div>
-    <div class="stat-value" style="font-size:1.1rem">₹0</div>
-    <div class="stat-sub">This month</div>
+    <div class="stat-icon">✓</div>
   </div>
 </div>
 
-<!-- QUICK ACTIONS -->
-<div class="quick-actions">
-  <a href="/rfq/new/" class="action-card" style="border-left-color:#3B82F6">
-    <div class="action-card-icon" style="background:#EFF6FF">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+<!-- STAT CARDS ROW 2 -->
+<div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat-box red">
+    <div class="stat-label">Lost</div>
+    <div class="stat-value">{{ lost }}</div>
+    <div class="stat-sub">Closed lost</div>
+    <div class="stat-icon">✗</div>
+  </div>
+  <div class="stat-box teal">
+    <div class="stat-label">Win Rate</div>
+    <div class="stat-value">{{ win_rate }}%</div>
+    <div class="stat-sub">Won / (Won + Lost)</div>
+    <div class="stat-icon">◎</div>
+  </div>
+  <div class="stat-box indigo">
+    <div class="stat-label">Month Revenue</div>
+    <div class="stat-value" style="font-size:1.2rem">
+      ₹{{ month_revenue|floatformat:0 }}
     </div>
-    <div>
-      <div class="action-card-title">New RFQ</div>
-      <div class="action-card-desc">Create box quotation</div>
+    <div class="stat-sub">This month (won)</div>
+    <div class="stat-icon">₹</div>
+  </div>
+  <div class="stat-box pink">
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-value" style="font-size:1.2rem">
+      ₹{{ total_revenue|floatformat:0 }}
     </div>
-  </a>
-  <a href="/clients/new/" class="action-card" style="border-left-color:#059669">
-    <div class="action-card-icon" style="background:#ECFDF5">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    </div>
-    <div>
-      <div class="action-card-title">Add Client</div>
-      <div class="action-card-desc">New client record</div>
-    </div>
-  </a>
-  <a href="/clients/" class="action-card" style="border-left-color:#8B5CF6">
-    <div class="action-card-icon" style="background:#F5F3FF">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    </div>
-    <div>
-      <div class="action-card-title">All Clients</div>
-      <div class="action-card-desc">View client list</div>
-    </div>
-  </a>
-  <a href="/materials/" class="action-card" style="border-left-color:#F59E0B">
-    <div class="action-card-icon" style="background:#FFFBEB">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-    </div>
-    <div>
-      <div class="action-card-title">Material Master</div>
-      <div class="action-card-desc">Manage materials</div>
-    </div>
-  </a>
+    <div class="stat-sub">All time (won)</div>
+    <div class="stat-icon">₹</div>
+  </div>
 </div>
 
-<!-- RECENT RFQs -->
-<div class="card">
-  <div class="card-header">
-    <span class="card-title">Recent RFQs</span>
+<!-- CHARTS ROW 1 -->
+<div class="charts-row">
+
+  <!-- Monthly Revenue Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Monthly Revenue</div>
+        <div class="chart-sub">Last 6 months — Won orders</div>
+      </div>
+    </div>
+    <div class="chart-body">
+      <canvas id="revenueChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- Status Donut -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">RFQ Status</div>
+        <div class="chart-sub">Current breakdown</div>
+      </div>
+    </div>
+    <div class="chart-body" style="display:flex;flex-direction:column;align-items:center">
+      <canvas id="statusChart" height="180"></canvas>
+     <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:0.75rem;font-size:0.65rem">
+  <span style="color:#94A3B8;font-weight:700">&#9632; Draft</span>
+  <span style="color:#F59E0B;font-weight:700">&#9632; In Progress</span>
+  <span style="color:#3B82F6;font-weight:700">&#9632; Sent</span>
+  <span style="color:#059669;font-weight:700">&#9632; Won</span>
+  <span style="color:#DC2626;font-weight:700">&#9632; Lost</span>
+</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CHARTS ROW 2 -->
+<div class="charts-row-2">
+
+  <!-- Monthly RFQ vs Won -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">RFQ vs Won</div>
+        <div class="chart-sub">Monthly comparison</div>
+      </div>
+    </div>
+    <div class="chart-body">
+      <canvas id="rfqWonChart" height="140"></canvas>
+    </div>
+  </div>
+
+  <!-- Weekly Activity -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Weekly Activity</div>
+        <div class="chart-sub">RFQs created last 7 days</div>
+      </div>
+    </div>
+    <div class="chart-body">
+      <canvas id="weeklyChart" height="140"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- RECENT RFQs TABLE -->
+<div class="chart-card">
+  <div class="chart-header">
+    <div class="chart-title">Recent RFQs</div>
     <a href="/rfq/" class="btn btn-outline btn-sm">View All</a>
   </div>
-  <div class="table-wrap">
-    <table>
+  <div style="overflow-x:auto">
+    <table class="dash-table">
       <thead>
         <tr>
           <th>RFQ Number</th>
           <th>Client</th>
           <th>Engineer</th>
+          <th>Boxes</th>
           <th>Status</th>
           <th>Date</th>
           <th>Action</th>
         </tr>
       </thead>
       <tbody>
+        {% for rfq in recent_rfqs %}
         <tr>
-          <td colspan="6">
-            <div class="empty-state">
-              <div class="empty-state-icon">&#9632;</div>
-              <div class="empty-state-title">No RFQs yet</div>
-              <div class="empty-state-text">Create your first RFQ to get started</div>
-              <a href="/rfq/new/" class="btn btn-primary btn-sm" style="margin-top:1rem">Create RFQ</a>
-            </div>
+          <td><strong>{{ rfq.rfq_number }}</strong></td>
+          <td>{{ rfq.client.company_name|default:"Walk-in" }}</td>
+          <td>{{ rfq.engineer.full_name|default:rfq.engineer.username|default:"—" }}</td>
+          <td>{{ rfq.boxes.count }}</td>
+          <td>
+            <span class="badge
+              {% if rfq.status == 'won' %}badge-won
+              {% elif rfq.status == 'lost' %}badge-lost
+              {% elif rfq.status == 'sent' %}badge-sent
+              {% elif rfq.status == 'in_progress' %}badge-progress
+              {% else %}badge-draft{% endif %}">
+              {{ rfq.get_status_display }}
+            </span>
+          </td>
+          <td>{{ rfq.created_at|date:"d M Y" }}</td>
+          <td style="display:flex;gap:0.4rem">
+            <a href="/rfq/{{ rfq.pk }}/" class="btn btn-outline btn-sm">View</a>
+            <a href="/rfq/{{ rfq.pk }}/generate/" class="btn btn-primary btn-sm">Generate</a>
           </td>
         </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center;padding:2rem;color:#94A3B8">
+            No RFQs yet —
+            <a href="/rfq/new/" style="color:#3B82F6;font-weight:600">Create first RFQ</a>
+          </td>
+        </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── DATA FROM DJANGO ──────────────────────────────
+const MONTHLY_LABELS = {{ monthly_labels|safe }};
+const MONTHLY_RFQ    = {{ monthly_rfq|safe }};
+const MONTHLY_WON    = {{ monthly_won|safe }};
+const MONTHLY_REV    = {{ monthly_rev|safe }};
+const WEEKLY_LABELS  = {{ weekly_labels|safe }};
+const WEEKLY_RFQ     = {{ weekly_rfq|safe }};
+const STATUS_DATA    = {{ status_data|safe }};
+
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size   = 11;
+Chart.defaults.color       = '#64748B';
+
+// ── 1. REVENUE BAR CHART ──────────────────────────
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: MONTHLY_LABELS,
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: MONTHLY_REV,
+      backgroundColor: 'rgba(59,130,246,0.8)',
+      borderColor: '#3B82F6',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => '₹' + ctx.raw.toLocaleString('en-IN')
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: '#F1F5F9' },
+        ticks: {
+          callback: v => '₹' + (v/1000).toFixed(0) + 'K'
+        }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── 2. STATUS DONUT ───────────────────────────────
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Draft','In Progress','Sent','Won','Lost'],
+    datasets: [{
+      data: STATUS_DATA,
+      backgroundColor: [
+        '#94A3B8','#F59E0B','#3B82F6','#059669','#DC2626'
+      ],
+      borderWidth: 2,
+      borderColor: '#fff',
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '65%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ctx.label + ': ' + ctx.raw
+        }
+      }
+    }
+  }
+});
+
+// ── 3. RFQ vs WON LINE CHART ──────────────────────
+new Chart(document.getElementById('rfqWonChart'), {
+  type: 'line',
+  data: {
+    labels: MONTHLY_LABELS,
+    datasets: [
+      {
+        label: 'RFQs Created',
+        data: MONTHLY_RFQ,
+        borderColor: '#3B82F6',
+        backgroundColor: 'rgba(59,130,246,0.08)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#3B82F6',
+      },
+      {
+        label: 'Won',
+        data: MONTHLY_WON,
+        borderColor: '#059669',
+        backgroundColor: 'rgba(5,150,105,0.08)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#059669',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { boxWidth: 10, padding: 15 }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: '#F1F5F9' },
+        ticks: { stepSize: 1 }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── 4. WEEKLY BAR CHART ───────────────────────────
+new Chart(document.getElementById('weeklyChart'), {
+  type: 'bar',
+  data: {
+    labels: WEEKLY_LABELS,
+    datasets: [{
+      label: 'RFQs',
+      data: WEEKLY_RFQ,
+      backgroundColor: 'rgba(139,92,246,0.8)',
+      borderColor: '#8B5CF6',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: '#F1F5F9' },
+        ticks: { stepSize: 1 }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+</script>
 {% endblock %}

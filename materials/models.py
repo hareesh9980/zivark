@@ -175,3 +175,87 @@ class HardwareConfig(models.Model):
 
     def __str__(self):
         return f"{self.material.name} → {self.calc_method}"
+    
+class FormulaConfig(models.Model):
+
+    LENGTH_UNIT_CHOICES = [
+        ('mm', 'Millimeter (mm)'),
+        ('ft', 'Feet (ft)'),
+        ('inch', 'Inches (inch)'),
+    ]
+
+    VOLUME_UNIT_CHOICES = [
+        ('cft', 'Cubic Feet (CFT)'),
+        ('m3',  'Cubic Meter (m³)'),
+    ]
+
+    name        = models.CharField(max_length=100,
+                    default='Default Config')
+    is_active   = models.BooleanField(default=True)
+
+    # CFT Settings
+    cft_wastage_pct   = models.FloatField(default=5.0,
+        help_text='Wastage % added to CFT calculation (5 = 5%)')
+    cft_conversion    = models.FloatField(default=35.315,
+        help_text='Cubic meter to CFT conversion (35.315 standard)')
+
+    # SQM Settings
+    sqm_wastage_pct   = models.FloatField(default=5.0,
+        help_text='Wastage % added to SQM calculation')
+
+    # Steel Settings
+    steel_wastage_pct = models.FloatField(default=2.0,
+        help_text='Wastage % for steel calculations')
+
+    # Units
+    input_unit        = models.CharField(max_length=10,
+        choices=LENGTH_UNIT_CHOICES, default='mm',
+        help_text='Unit of dimensions customer provides')
+
+    # Pricing
+    overhead_pct      = models.FloatField(default=7.0)
+    margin_pct        = models.FloatField(default=25.0)
+    gst_pct           = models.FloatField(default=12.0)
+
+    # Labour
+    labour_rate_per_hour = models.FloatField(default=100.0)
+    labour_hours_default = models.FloatField(default=8.0)
+
+    # Lashing rule
+    lashing_belts_per_ton = models.FloatField(default=2.0,
+        help_text='Minimum lashing belts per ton of weight')
+
+    # Silica gel rule
+    silica_gel_grams_per_cbm = models.FloatField(default=500.0,
+        help_text='Silica gel grams per CBM (500g standard)')
+    silica_gel_packet_grams  = models.FloatField(default=50.0,
+        help_text='Weight per packet in grams (50g standard)')
+
+    # Nail rule
+    nail_qty_per_sqm = models.FloatField(default=1.0,
+        help_text='Nails quantity per SQM base area')
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} (active={self.is_active})"
+
+    @classmethod
+    def get_active(cls):
+        cfg = cls.objects.filter(is_active=True).first()
+        if not cfg:
+            cfg = cls.objects.create(name='Default Config')
+        return cfg
+
+    @property
+    def cft_factor(self):
+        """Wastage multiplier for CFT"""
+        return 1 + (self.cft_wastage_pct / 100)
+
+    @property
+    def sqm_factor(self):
+        """Wastage multiplier for SQM"""
+        return 1 + (self.sqm_wastage_pct / 100)
+
+    class Meta:
+        verbose_name = 'Formula Configuration'

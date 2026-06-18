@@ -50,6 +50,22 @@ class BoxDesign(models.Model):
         ('domestic', 'Domestic'),
         ('export',   'Export / International'),
     ]
+    
+    PACKING_TYPE_CHOICES = [
+    ('box',       'Wooden Box'),
+    ('pallet',    'Pallet Only'),
+    ('box_pallet','Box + Pallet'),
+]
+
+    packing_type     = models.CharField(
+    max_length=20,
+    choices=PACKING_TYPE_CHOICES,
+    default='box'
+    ) 
+    pallet_deck_type = models.CharField(
+    max_length=20,
+    default='auto'
+)
 
     rfq          = models.ForeignKey(
                      RFQ,
@@ -107,6 +123,22 @@ class BoxDesign(models.Model):
 
     # Status
     status     = models.CharField(max_length=20, default='pending')
+    PACKING_TYPE_CHOICES = [
+    ('box',       'Wooden Box'),
+    ('pallet',    'Pallet Only'),
+    ('box_pallet','Box + Pallet'),
+]
+
+    packing_type     = models.CharField(
+    max_length=20,
+    choices=PACKING_TYPE_CHOICES,
+    default='box'
+)
+    pallet_deck_type = models.CharField(
+    max_length=20,
+    default='auto'
+)
+    status = models.CharField(max_length=20, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

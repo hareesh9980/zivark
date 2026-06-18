@@ -187,6 +187,9 @@ tr:hover td { background: #FAFBFC; }
         <a href="/materials/" class="nav-item {% block nav_materials %}{% endblock %}">
           <span class="nav-icon">&#9632;</span> Material Master
         </a>
+        <a href="/materials/formula-config/" class="nav-item {% block nav_formula %}{% endblock %}">
+        <span class="nav-icon">&#9632;</span> Formula Config
+      </a>
       </div>
 
       {% if request.user.is_admin %}

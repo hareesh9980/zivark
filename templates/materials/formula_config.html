@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% block title %}Formula Configuration{% endblock %}
+{% block page_title %}Formula Configuration{% endblock %}
+{% block breadcrumb %}ZIVARK / Materials / Formula Config{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Formula Configuration</h1>
+    <p>Configure calculation formulas for your factory workflow</p>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem">
+  <div style="font-size:0.82rem;font-weight:700;color:#1E40AF;margin-bottom:0.5rem">How Formula Config Works</div>
+  <div style="font-size:0.78rem;color:#1E40AF;line-height:1.6">
+    These settings control how ZIVARK calculates material quantities.<br>
+    <strong>CFT Wastage 5%</strong> → formula multiplied by 1.05<br>
+    <strong>CFT Wastage 8%</strong> → formula multiplied by 1.08<br>
+    <strong>Silica Gel 500g/CBM</strong> → 13.6 CBM × 500 ÷ 50g = 136 packets<br>
+    All factories can set their own values here!
+  </div>
+</div>
+
+<form method="POST">
+{% csrf_token %}
+
+<!-- CFT FORMULA -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header">
+    <span class="card-title">CFT Formula Settings (Solid Wood)</span>
+  </div>
+  <div class="card-body">
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:0.75rem;margin-bottom:1rem;font-family:monospace;font-size:0.82rem;color:#1E40AF">
+      CFT = (L/1000) × (W/1000) × (H/1000) × QTY × {{ cfg.cft_conversion }} × {{ cfg.cft_factor }}
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>CFT Wastage %</label>
+        <input type="number" name="cft_wastage_pct"
+               value="{{ cfg.cft_wastage_pct }}"
+               step="0.1" min="0" max="50">
+        <div class="form-note">Standard = 5% | Some factories use 8-10%</div>
+      </div>
+      <div class="form-group">
+        <label>CFT Conversion Factor</label>
+        <input type="number" name="cft_conversion"
+               value="{{ cfg.cft_conversion }}"
+               step="0.001">
+        <div class="form-note">1 m³ = 35.315 CFT (standard — don't change unless needed)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SQM FORMULA -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header">
+    <span class="card-title">SQM Formula Settings (Plywood)</span>
+  </div>
+  <div class="card-body">
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:0.75rem;margin-bottom:1rem;font-family:monospace;font-size:0.82rem;color:#059669">
+      SQM = (L/1000) × (W/1000) × QTY × {{ cfg.sqm_factor }}
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>SQM Wastage %</label>
+        <input type="number" name="sqm_wastage_pct"
+               value="{{ cfg.sqm_wastage_pct }}"
+               step="0.1" min="0" max="50">
+        <div class="form-note">Standard = 5%</div>
+      </div>
+      <div class="form-group">
+        <label>Steel Wastage %</label>
+        <input type="number" name="steel_wastage_pct"
+               value="{{ cfg.steel_wastage_pct }}"
+               step="0.1" min="0" max="50">
+        <div class="form-note">Standard = 2%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header">
+    <span class="card-title">Pricing Formula</span>
+  </div>
+  <div class="card-body">
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:0.75rem;margin-bottom:1rem;font-family:monospace;font-size:0.82rem;color:#92400E">
+      Grand Total = CEILING((Material + Overhead%) × (1 + Margin%), 100) + GST%
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Overhead %</label>
+        <input type="number" name="overhead_pct"
+               value="{{ cfg.overhead_pct }}"
+               step="0.1">
+        <div class="form-note">Factory overhead (7-20% typical)</div>
+      </div>
+      <div class="form-group">
+        <label>Margin %</label>
+        <input type="number" name="margin_pct"
+               value="{{ cfg.margin_pct }}"
+               step="0.1">
+        <div class="form-note">Profit margin (15-25% typical)</div>
+      </div>
+      <div class="form-group">
+        <label>GST %</label>
+        <input type="number" name="gst_pct"
+               value="{{ cfg.gst_pct }}"
+               step="0.1">
+        <div class="form-note">GST on packaging = 12%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HARDWARE CALCULATIONS -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header">
+    <span class="card-title">Hardware Auto-Calculation Rules</span>
+  </div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Silica Gel (grams per CBM)</label>
+        <input type="number" name="silica_gel_grams_per_cbm"
+               value="{{ cfg.silica_gel_grams_per_cbm }}"
+               step="1">
+        <div class="form-note">
+          Standard = 500g/CBM<br>
+          e.g. 13.6 CBM × 500 = 6800g
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Silica Gel Packet Size (grams)</label>
+        <input type="number" name="silica_gel_packet_grams"
+               value="{{ cfg.silica_gel_packet_grams }}"
+               step="1">
+        <div class="form-note">
+          Standard = 50g packets<br>
+          6800g ÷ 50 = 136 packets
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Lashing Belts per Ton</label>
+        <input type="number" name="lashing_belts_per_ton"
+               value="{{ cfg.lashing_belts_per_ton }}"
+               step="0.5">
+        <div class="form-note">Minimum belts = Weight(ton) × this value</div>
+      </div>
+      <div class="form-group">
+        <label>Nail Qty per SQM Base Area</label>
+        <input type="number" name="nail_qty_per_sqm"
+               value="{{ cfg.nail_qty_per_sqm }}"
+               step="0.1">
+        <div class="form-note">Nails = Base Area SQM × this value</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LABOUR -->
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="card-header">
+    <span class="card-title">Labour Settings</span>
+  </div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Labour Rate (₹ per hour)</label>
+        <input type="number" name="labour_rate_per_hour"
+               value="{{ cfg.labour_rate_per_hour }}"
+               step="1">
+        <div class="form-note">Standard = ₹100/hour</div>
+      </div>
+      <div class="form-group">
+        <label>Default Labour Hours per Box</label>
+        <input type="number" name="labour_hours_default"
+               value="{{ cfg.labour_hours_default }}"
+               step="0.5">
+        <div class="form-note">Can be overridden per box</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE PREVIEW -->
+<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem">
+  <div style="font-size:0.82rem;font-weight:700;color:#065F46;margin-bottom:0.75rem">Live Formula Preview</div>
+  <div style="font-size:0.78rem;color:#065F46;font-family:monospace;line-height:2">
+    CFT Formula: =(L/1000)*(W/1000)*(H/1000)*QTY*<span id="conv-preview">{{ cfg.cft_conversion }}</span>*<span id="cft-waste-preview">{{ cfg.cft_factor }}</span><br>
+    SQM Formula: =(L/1000)*(W/1000)*QTY*<span id="sqm-waste-preview">{{ cfg.sqm_factor }}</span><br>
+    Silica Gel: =ROUNDUP(CBM*<span id="silica-preview">{{ cfg.silica_gel_grams_per_cbm|floatformat:0 }}</span>/<span id="packet-preview">{{ cfg.silica_gel_packet_grams|floatformat:0 }}</span>,0) packets<br>
+    Grand Total: =CEILING((Material*(1+<span id="oh-preview">{{ cfg.overhead_pct }}</span>/100))*(1+<span id="mg-preview">{{ cfg.margin_pct }}</span>/100),100)*(1+<span id="gst-preview">{{ cfg.gst_pct }}</span>/100)
+  </div>
+</div>
+
+<div style="display:flex;gap:0.75rem">
+  <button type="submit" class="btn btn-primary">Save Formula Config</button>
+  <a href="/materials/" class="btn btn-outline">Back</a>
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live preview update
+function updatePreview() {
+  const cftW = parseFloat(document.querySelector('[name=cft_wastage_pct]').value)||5;
+  const sqmW = parseFloat(document.querySelector('[name=sqm_wastage_pct]').value)||5;
+  const conv = parseFloat(document.querySelector('[name=cft_conversion]').value)||35.315;
+  const oh   = parseFloat(document.querySelector('[name=overhead_pct]').value)||7;
+  const mg   = parseFloat(document.querySelector('[name=margin_pct]').value)||25;
+  const gst  = parseFloat(document.querySelector('[name=gst_pct]').value)||12;
+  const sg   = parseFloat(document.querySelector('[name=silica_gel_grams_per_cbm]').value)||500;
+  const sp   = parseFloat(document.querySelector('[name=silica_gel_packet_grams]').value)||50;
+
+  document.getElementById('cft-waste-preview').textContent  = (1+cftW/100).toFixed(2);
+  document.getElementById('sqm-waste-preview').textContent  = (1+sqmW/100).toFixed(2);
+  document.getElementById('conv-preview').textContent       = conv;
+  document.getElementById('oh-preview').textContent         = oh;
+  document.getElementById('mg-preview').textContent         = mg;
+  document.getElementById('gst-preview').textContent        = gst;
+  document.getElementById('silica-preview').textContent     = sg;
+  document.getElementById('packet-preview').textContent     = sp;
+}
+
+document.querySelectorAll('input[type=number]').forEach(el => {
+  el.addEventListener('input', updatePreview);
+});
+</script>
+{% endblock %}

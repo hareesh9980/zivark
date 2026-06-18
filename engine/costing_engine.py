@@ -44,9 +44,25 @@ def build_bom(design):
         })
         sr += 1
 
-    # ── DECK ─────────────────────────────────
+  # ── DECK ─────────────────────────────────
     deck_mat = design.get('deck_material')
     if deck_mat:
+        uom = design.get('deck_uom', 'CFT')
+    if uom == 'SQM':
+        # Plywood deck — full sheet
+        add_item(
+            'Deck',
+            deck_mat,
+            design['box_od_l'],   # full OD length
+            design['box_od_w'],   # full OD width
+            design['deck_h'],     # thickness (8mm)
+            design['deck_qty'],
+            design['deck_total_qty'],
+            'SQM',
+            get_material_rate(deck_mat),
+        )
+    else:
+        # Pinewood deck — planks
         add_item(
             'Deck',
             deck_mat,
@@ -55,7 +71,7 @@ def build_bom(design):
             design['deck_h'],
             design['deck_qty'],
             design['deck_total_qty'],
-            design['deck_uom'],
+            'CFT',
             get_material_rate(deck_mat),
         )
 

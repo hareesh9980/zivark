@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% block title %}Edit Material{% endblock %}
+{% block page_title %}Edit Material{% endblock %}
+{% block breadcrumb %}ZIVARK / Materials / Edit{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.section-divider { margin: 1.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #F1F5F9; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B; }
+.helper-box { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.78rem; color: #1E40AF; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Edit Material</h1>
+    <p>Update material details and rate</p>
+  </div>
+  <a href="/materials/" class="btn btn-outline">Back</a>
+</div>
+
+<div class="card" style="max-width:700px">
+  <div class="card-body">
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="helper-box">
+        Editing: <strong>{{ mat.name }}</strong> — {{ mat.get_category_display }}
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Category *</label>
+          <select name="category" required>
+            {% for val, label in categories %}
+            <option value="{{ val }}" {% if mat.category == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Material Name *</label>
+          <input type="text" name="name"
+                 value="{{ mat.name }}" required>
+        </div>
+      </div>
+
+      <!-- SOLID WOOD FIELDS -->
+      {% if mat.category == 'solid_wood' %}
+      <div class="section-divider">Solid Wood Details</div>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Wood Type</label>
+          <input type="text" name="wood_type"
+                 value="{{ mat.wood_type }}"
+                 placeholder="Pinewood, Rubber Wood, Sal...">
+        </div>
+        <div class="form-group">
+          <label>Grade</label>
+          <select name="wood_grade">
+            {% for val, label in grades %}
+            <option value="{{ val }}"
+              {% if mat.wood_grade == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Width (mm)</label>
+          <input type="number" name="width_mm"
+                 value="{{ mat.width_mm }}" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Height (mm)</label>
+          <input type="number" name="height_mm"
+                 value="{{ mat.height_mm }}" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Rate (₹ per CFT)</label>
+          <input type="number" name="rate"
+                 value="{{ mat.rate }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>UOM</label>
+          <select name="uom">
+            {% for val, label in uoms %}
+            <option value="{{ val }}"
+              {% if mat.uom == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- PLYWOOD FIELDS -->
+      {% elif mat.category == 'plywood' %}
+      <div class="section-divider">Plywood Details</div>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Grade</label>
+          <select name="wood_grade">
+            {% for val, label in grades %}
+            <option value="{{ val }}"
+              {% if mat.wood_grade == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Thickness (mm)</label>
+          <input type="number" name="thickness_mm"
+                 value="{{ mat.thickness_mm }}" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Rate (₹ per SQM)</label>
+          <input type="number" name="rate"
+                 value="{{ mat.rate }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>UOM</label>
+          <select name="uom">
+            {% for val, label in uoms %}
+            <option value="{{ val }}"
+              {% if mat.uom == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- HARDWARE FIELDS -->
+      {% elif mat.category == 'hardware' %}
+      <div class="section-divider">Hardware Details</div>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Specification</label>
+          <input type="text" name="description"
+                 value="{{ mat.description }}"
+                 placeholder="M10x12, 32mm...">
+        </div>
+        <div class="form-group">
+          <label>Rate</label>
+          <input type="number" name="rate"
+                 value="{{ mat.rate }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>UOM</label>
+          <select name="uom">
+            {% for val, label in uoms %}
+            <option value="{{ val }}"
+              {% if mat.uom == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- CONSUMABLE FIELDS -->
+      {% elif mat.category == 'consumable' %}
+      <div class="section-divider">Consumable Details</div>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" name="description"
+                 value="{{ mat.description }}"
+                 placeholder="50 micron, 200 GSM...">
+        </div>
+        <div class="form-group">
+          <label>Rate</label>
+          <input type="number" name="rate"
+                 value="{{ mat.rate }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>UOM</label>
+          <select name="uom">
+            {% for val, label in uoms %}
+            <option value="{{ val }}"
+              {% if mat.uom == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- STEEL FIELDS -->
+      {% elif mat.category == 'steel' %}
+      <div class="section-divider">Steel Details</div>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Section Type</label>
+          <input type="text" name="description"
+                 value="{{ mat.description }}"
+                 placeholder="ISMC 150, I-Beam 200...">
+        </div>
+        <div class="form-group">
+          <label>Weight per meter (kg/m)</label>
+          <input type="number" name="width_mm"
+                 value="{{ mat.width_mm }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Rate (₹ per KG)</label>
+          <input type="number" name="rate"
+                 value="{{ mat.rate }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>UOM</label>
+          <select name="uom">
+            {% for val, label in uoms %}
+            <option value="{{ val }}"
+              {% if mat.uom == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- OTHER -->
+      {% else %}
+      <div class="section-divider">Material Details</div>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Rate</label>
+          <input type="number" name="rate"
+                 value="{{ mat.rate }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>UOM</label>
+          <select name="uom">
+            {% for val, label in uoms %}
+            <option value="{{ val }}"
+              {% if mat.uom == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label>Notes (optional)</label>
+        <textarea name="notes"
+          placeholder="Supplier info, quality notes...">{{ mat.notes }}</textarea>
+      </div>
+
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn btn-primary">
+          Update Material
+        </button>
+        <a href="/materials/" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

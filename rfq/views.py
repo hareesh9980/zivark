@@ -1,15 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.utils import timezone
-import uuid
+import os
 import json
+from django.http import FileResponse
 
 from .models import RFQ, BoxDesign, Quotation
 from clients.models import Client
 from engine.design_engine import run_design
 from engine.costing_engine import run_costing
 
+
+# ── HELPERS ──────────────────────────────────────────
 
 def generate_rfq_number():
     from datetime import datetime
@@ -35,11 +37,15 @@ def get_override(post, field):
     return None
 
 
+# ── RFQ LIST ─────────────────────────────────────────
+
 @login_required
 def rfq_list(request):
     rfqs = RFQ.objects.all().select_related('client', 'engineer')
     return render(request, 'rfq/list.html', {'rfqs': rfqs})
 
+
+# ── RFQ NEW ──────────────────────────────────────────
 
 @login_required
 def rfq_new(request):
@@ -56,26 +62,51 @@ def rfq_new(request):
         for i in range(1, box_count + 1):
             BoxDesign.objects.create(
                 rfq           = rfq,
-                product_name  = request.POST.get(f'product_name_{i}', f'Box {i}'),
-                quantity      = int(request.POST.get(f'quantity_{i}', 1)),
-                box_id_length = float(request.POST.get(f'length_{i}', 0)),
-                box_id_width  = float(request.POST.get(f'width_{i}', 0)),
-                box_id_height = float(request.POST.get(f'height_{i}', 0)),
-                weight_kg     = float(request.POST.get(f'weight_{i}', 0)),
-                access_type   = request.POST.get(f'access_type_{i}', '2_access'),
-                shipment_type = request.POST.get(f'shipment_type_{i}', 'export'),
-                override_beading_w = get_override(request.POST, f'beading_w_{i}'),
-                override_beading_h = get_override(request.POST, f'beading_h_{i}'),
-                override_wall_t    = get_override(request.POST, f'wall_t_{i}'),
-                override_deck_w    = get_override(request.POST, f'deck_w_{i}'),
-                override_deck_h    = get_override(request.POST, f'deck_h_{i}'),
-                override_runner_w  = get_override(request.POST, f'runner_w_{i}'),
-                override_runner_h  = get_override(request.POST, f'runner_h_{i}'),
+                product_name  = request.POST.get(
+                    f'product_name_{i}', f'Box {i}'),
+                quantity      = int(request.POST.get(
+                    f'quantity_{i}', 1)),
+                box_id_length = float(request.POST.get(
+                    f'length_{i}', 0)),
+                box_id_width  = float(request.POST.get(
+                    f'width_{i}', 0)),
+                box_id_height = float(request.POST.get(
+                    f'height_{i}', 0)),
+                weight_kg     = float(request.POST.get(
+                    f'weight_{i}', 0)),
+                access_type   = request.POST.get(
+                    f'access_type_{i}', '2_access'),
+                shipment_type = request.POST.get(
+                    f'shipment_type_{i}', 'export'),
+                packing_type  = request.POST.get(
+                    f'packing_type_{i}', 'box'),
+                pallet_deck_type = request.POST.get(
+                    f'pallet_deck_type_{i}', 'auto'),
+                override_beading_w  = get_override(
+                    request.POST, f'beading_w_{i}'),
+                override_beading_h  = get_override(
+                    request.POST, f'beading_h_{i}'),
+                override_wall_t     = get_override(
+                    request.POST, f'wall_t_{i}'),
+                override_deck_w     = get_override(
+                    request.POST, f'deck_w_{i}'),
+                override_deck_h     = get_override(
+                    request.POST, f'deck_h_{i}'),
+                override_runner_w   = get_override(
+                    request.POST, f'runner_w_{i}'),
+                override_runner_h   = get_override(
+                    request.POST, f'runner_h_{i}'),
+                override_l_runner_w = get_override(
+                    request.POST, f'l_runner_w_{i}'),
+                override_l_runner_h = get_override(
+                    request.POST, f'l_runner_h_{i}'),
             )
         messages.success(request, f'RFQ {rfq.rfq_number} created!')
         return redirect('rfq:generate', pk=rfq.pk)
     return render(request, 'rfq/new.html', {'clients': clients})
 
+
+# ── RFQ DETAIL ───────────────────────────────────────
 
 @login_required
 def rfq_detail(request, pk):
@@ -87,6 +118,8 @@ def rfq_detail(request, pk):
     })
 
 
+# ── RFQ GENERATE ─────────────────────────────────────
+
 @login_required
 def rfq_generate(request, pk):
     rfq     = get_object_or_404(RFQ, pk=pk)
@@ -94,23 +127,49 @@ def rfq_generate(request, pk):
     results = []
 
     for box in boxes:
-        design = run_design(
-            id_l      = box.box_id_length,
-            id_w      = box.box_id_width,
-            id_h      = box.box_id_height,
-            weight_kg = box.weight_kg,
-            access_type   = box.access_type,
-            shipment_type = box.shipment_type,
-            override_beading_w = box.override_beading_w,
-            override_beading_h = box.override_beading_h,
-            override_wall_t    = box.override_wall_t,
-            override_deck_w    = box.override_deck_w,
-            override_deck_h    = box.override_deck_h,
-            override_runner_w  = box.override_runner_w,
-            override_runner_h  = box.override_runner_h,
-        )
+        packing_type = getattr(box, 'packing_type', 'box') or 'box'
 
-        # Save OD to DB
+        # ── SELECT ENGINE ────────────────────────────
+        if packing_type == 'pallet':
+            from engine.pallet_engine import run_pallet_design
+            design = run_pallet_design(
+                id_l             = box.box_id_length,
+                id_w             = box.box_id_width,
+                id_h             = box.box_id_height,
+                weight_kg        = box.weight_kg,
+                shipment_type    = box.shipment_type,
+                pallet_deck_type = getattr(
+                    box, 'pallet_deck_type', 'auto') or 'auto',
+                deck_w           = box.override_deck_w,
+                deck_h           = box.override_deck_h,
+                runner_w         = box.override_runner_w,
+                runner_h         = box.override_runner_h,
+                l_runner_w       = box.override_l_runner_w,
+                l_runner_h       = box.override_l_runner_h,
+                product_name     = box.product_name,
+            )
+        else:
+            # Box or Box+Pallet → use box design engine
+            design = run_design(
+                id_l                = box.box_id_length,
+                id_w                = box.box_id_width,
+                id_h                = box.box_id_height,
+                weight_kg           = box.weight_kg,
+                access_type         = box.access_type,
+                shipment_type       = box.shipment_type,
+                product_name        = box.product_name,
+                override_beading_w  = box.override_beading_w,
+                override_beading_h  = box.override_beading_h,
+                override_wall_t     = box.override_wall_t,
+                override_deck_w     = box.override_deck_w,
+                override_deck_h     = box.override_deck_h,
+                override_runner_w   = box.override_runner_w,
+                override_runner_h   = box.override_runner_h,
+                override_l_runner_w = box.override_l_runner_w,
+                override_l_runner_h = box.override_l_runner_h,
+            )
+
+        # ── SAVE OD TO DB ────────────────────────────
         box.box_od_length  = design['box_od_l']
         box.box_od_width   = design['box_od_w']
         box.box_od_height  = design['box_od_h']
@@ -119,7 +178,7 @@ def rfq_generate(request, pk):
         box.base_area_sqm  = design['volumes']['base_area_sqm']
         box.save()
 
-        # Load edited BOM if exists
+        # ── LOAD EDITED BOM IF EXISTS ─────────────────
         if box.edited_bom:
             try:
                 edited_rows   = json.loads(box.edited_bom)
@@ -187,6 +246,8 @@ def rfq_generate(request, pk):
     })
 
 
+# ── RFQ STATUS UPDATE ────────────────────────────────
+
 @login_required
 def rfq_status(request, pk):
     if request.method == 'POST':
@@ -196,10 +257,93 @@ def rfq_status(request, pk):
             rfq.status = status
             rfq.save()
             try:
-                q = rfq.quotation
+                q        = rfq.quotation
                 q.status = status
                 q.save()
             except:
                 pass
-            messages.success(request, f'Status updated to {status.upper()}!')
+            messages.success(
+                request,
+                f'Status updated to {status.upper()}!'
+            )
     return redirect('rfq:detail', pk=pk)
+
+
+# ── EXCEL DOWNLOAD ───────────────────────────────────
+
+@login_required
+def rfq_excel(request, pk):
+    rfq     = get_object_or_404(RFQ, pk=pk)
+    boxes   = rfq.boxes.all()
+    results = []
+
+    for box in boxes:
+        packing_type = getattr(box, 'packing_type', 'box') or 'box'
+
+        if packing_type == 'pallet':
+            from engine.pallet_engine import run_pallet_design
+            design = run_pallet_design(
+                id_l             = box.box_id_length,
+                id_w             = box.box_id_width,
+                id_h             = box.box_id_height,
+                weight_kg        = box.weight_kg,
+                shipment_type    = box.shipment_type,
+                pallet_deck_type = getattr(
+                    box, 'pallet_deck_type', 'auto') or 'auto',
+                product_name     = box.product_name,
+            )
+        else:
+            design = run_design(
+                id_l          = box.box_id_length,
+                id_w          = box.box_id_width,
+                id_h          = box.box_id_height,
+                weight_kg     = box.weight_kg,
+                access_type   = box.access_type,
+                shipment_type = box.shipment_type,
+                product_name  = box.product_name,
+            )
+
+        result = run_costing(design)
+        results.append({
+            'box':    box,
+            'design': design,
+            'bom':    result['bom'],
+            'totals': result['totals'],
+        })
+
+    edited_data = None
+    if request.method == 'POST':
+        try:
+            edited_data = json.loads(
+                request.POST.get('edited_bom', '[]'))
+        except:
+            edited_data = None
+
+    # Use correct generator based on packing type
+    first_box = boxes.first()
+    packing_type = getattr(
+        first_box, 'packing_type', 'box') or 'box'
+
+    if packing_type == 'pallet':
+        from documents.pallet_excel_generator import (
+            generate_pallet_excel)
+        filepath = generate_pallet_excel(
+            rfq, results, edited_data)
+    else:
+        from documents.excel_generator import (
+            generate_costing_excel)
+        filepath = generate_costing_excel(
+            rfq, results, edited_data)
+
+    filename = os.path.basename(filepath)
+    response = FileResponse(
+        open(filepath, 'rb'),
+        content_type=(
+            'application/vnd.openxmlformats-'
+            'officedocument.spreadsheetml.sheet'
+        )
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename="{filename}"'
+    )
+    return response

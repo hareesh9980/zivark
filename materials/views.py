@@ -211,3 +211,28 @@ def weight_rule_edit(request, pk):
         'solid_woods': materials.filter(category='solid_wood'),
         'plywoods':    materials.filter(category='plywood'),
     })
+
+
+from .models import Material, WeightRule, HardwareConfig, FormulaConfig
+
+@login_required
+def formula_config(request):
+    cfg = FormulaConfig.get_active()
+    if request.method == 'POST':
+        cfg.cft_wastage_pct          = float(request.POST.get('cft_wastage_pct', 5))
+        cfg.sqm_wastage_pct          = float(request.POST.get('sqm_wastage_pct', 5))
+        cfg.steel_wastage_pct        = float(request.POST.get('steel_wastage_pct', 2))
+        cfg.cft_conversion           = float(request.POST.get('cft_conversion', 35.315))
+        cfg.overhead_pct             = float(request.POST.get('overhead_pct', 7))
+        cfg.margin_pct               = float(request.POST.get('margin_pct', 25))
+        cfg.gst_pct                  = float(request.POST.get('gst_pct', 12))
+        cfg.labour_rate_per_hour     = float(request.POST.get('labour_rate_per_hour', 100))
+        cfg.labour_hours_default     = float(request.POST.get('labour_hours_default', 8))
+        cfg.lashing_belts_per_ton    = float(request.POST.get('lashing_belts_per_ton', 2))
+        cfg.silica_gel_grams_per_cbm = float(request.POST.get('silica_gel_grams_per_cbm', 500))
+        cfg.silica_gel_packet_grams  = float(request.POST.get('silica_gel_packet_grams', 50))
+        cfg.nail_qty_per_sqm         = float(request.POST.get('nail_qty_per_sqm', 1))
+        cfg.save()
+        messages.success(request, 'Formula configuration saved!')
+        return redirect('materials:formula_config')
+    return render(request, 'materials/formula_config.html', {'cfg': cfg})
